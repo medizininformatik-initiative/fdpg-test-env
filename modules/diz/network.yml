@@ -1,0 +1,17 @@
+---
+- name: Add entries to /etc/hosts
+  hosts:
+  - diz_dsf_bpe
+  - diz_triangle
+  become: true
+  tasks:
+  - name: Add bpe entry to /etc/hosts
+    lineinfile:
+      path: /etc/hosts
+      line: "10.0.0.2 bpe.diz.local"
+      state: present
+  - name: Add triangle entry to /etc/hosts
+    lineinfile:
+      path: /etc/hosts
+      line: "10.0.0.3 triangle.diz.local"
+      state: present
