@@ -8,14 +8,19 @@ resource "hcloud_ssh_key" "mruehle" {
   public_key = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQD5CdDq6AyEiDIThvG924gpxO/h9hVq0KTxdkD8f0dXGWX//C83vAYlpydGblcE09MN9Pk8c7BnQQeFqrENZAyZxwbz1NWSAMO1bXpJW+I8a6TikC493ZTUE2eJ2IFWfrQkUmT0jKAWuNSdvSK+78D7VI4m4zMf8thJCfHRy+fQraNClAXWcvtNCtAOYLj4kKTfuXuFOCgdNE5H3/0Xbl8OUBQ910EfQ1Dfp49vMazWo9w97NPkWUtJP1zZDgunYa8oHSU3t/6BM9Gh05gVIFiTHJE+NDCunmnlcWgiufLeKJg4EwjB1kJNcoqTtdr8tKJb5Z8pL/t85yzKtSEx72Zl mruehle@life-511480"
 }
 
+resource "hcloud_ssh_key" "jgruendner" {
+  name       = "Julian Gruendner"
+  public_key = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQDjXGh5tJvLTgkI8Ftcagie0D82jCuO5zSpety0/M32PFFijqO1oB84bOgtZxXYCiqNiPnbNXz4V6yk7S4KzKX3nT5GQsOsISs33ZobR9YJwhAT8uFawXcEHgAui63KsL4xFJY4r6xvXxpKzmC8WYkyGxTd0VS45AvlvoLycy8tdky5a6ugtvzmUow8iRa7QlW1AGwug0TSWdRhe4NobE+pep+KUaSFnZbl/t9def8G1hC8pQBSafeHitHdPEjeJBcwgeg+z+twwZMU3+D3/q73H1mN9gn3ReJq5vp7G0UgXGUj6XyUlNCp0gfW4W5M0frKuXqBz825Brvub6uOxZBkxL0uaOF6qCX/LXdx5P1g2dEMyxIfuFxqz5n1URjKCArAOu3PP+BF7/PnZoo94x+2aDfM0iur7G0b9g0ICD5GwESsZKjcV2ONUR+l8bw+t05NCGcoZSBwkl6jQVHJI7lBjwtdP/yzVJrbxMvpH9vpINn+BzcaydYebNO3IbTvbA8nYl9Yjen2FZMTVbgri4YbWf39r934qnKcxnQMZDX9aY7sYDDja1P0E5PlDFZNJ3W8IlZvlL5gduvHXPkUYMW7f2Rp0v7SPv8AHWF9+v4JAOVCU2F7g9hsd4xm3fFZ1YoO94IYsJRMAc/C+6TroMvt8Nw7DBWq6WTGfmxDSAcdAw== juliangruendner@googlemail.com"
+}
+
 module "diz" {
   source = "./modules/diz"
   number = count.index + 1
-  ssh_keys = [ hcloud_ssh_key.akiel.id, hcloud_ssh_key.mruehle.id ]
+  ssh_keys = [ hcloud_ssh_key.akiel.id, hcloud_ssh_key.mruehle.id, hcloud_ssh_key.jgruendner.id ]
   count = 1
 }
 
 module "fdpg" {
   source = "./modules/fdpg"
-  ssh_keys = [ hcloud_ssh_key.akiel.id, hcloud_ssh_key.mruehle.id ]
+  ssh_keys = [ hcloud_ssh_key.akiel.id, hcloud_ssh_key.mruehle.id, hcloud_ssh_key.jgruendner.id ]
 }
