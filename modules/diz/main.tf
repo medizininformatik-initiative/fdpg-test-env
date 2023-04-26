@@ -58,6 +58,7 @@ resource "hcloud_server" "dsf_fhir" {
   name         = format("diz-%d-dsf-fhir", var.number)
   image        = "ubuntu-22.04"
   server_type  = "cx11"
+  datacenter   = "fsn1-dc14"
   ssh_keys     = var.ssh_keys
   firewall_ids = [hcloud_firewall.dmz.id]
 
@@ -88,6 +89,7 @@ resource "hcloud_server" "dsf_bpe" {
   name         = format("diz-%d-dsf-bpe", var.number)
   image        = "ubuntu-22.04"
   server_type  = "cx11"
+  datacenter   = "fsn1-dc14"
   ssh_keys     = var.ssh_keys
   firewall_ids = [hcloud_firewall.intern.id]
 
@@ -107,6 +109,7 @@ resource "hcloud_server" "triangle" {
   name        = format("diz-%d-triangle", var.number)
   image       = "ubuntu-22.04"
   server_type = "cx31"
+  datacenter   = "fsn1-dc14"
   ssh_keys    = var.ssh_keys
 
   network {

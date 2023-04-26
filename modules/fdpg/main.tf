@@ -33,6 +33,7 @@ resource "hcloud_server" "fdpg" {
   name         = "fdpg"
   image        = "ubuntu-22.04"
   server_type  = "cx41"
+  datacenter   = "fsn1-dc14"
   ssh_keys     = var.ssh_keys
   firewall_ids = [hcloud_firewall.fdpg.id]
 
@@ -55,6 +56,7 @@ resource "hcloud_server" "fdpg-keycloak" {
   name         = "fdpg-keycloak"
   image        = "ubuntu-22.04"
   server_type  = "cx11"
+  datacenter   = "fsn1-dc14"
   ssh_keys     = var.ssh_keys
   firewall_ids = [hcloud_firewall.fdpg.id]
 
