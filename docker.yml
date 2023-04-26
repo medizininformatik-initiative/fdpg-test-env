@@ -15,6 +15,7 @@
       - curl
       - gnupg-agent
       - software-properties-common
+      - python3-jmespath
       state: present
 
   - name: Add Docker GPG key
@@ -31,3 +32,10 @@
     apt:
       name: docker-ce
       state: present
+
+- name: Install docker-compose
+  pip:
+    name:
+    - PyYAML
+    - docker
+    - docker-compose
