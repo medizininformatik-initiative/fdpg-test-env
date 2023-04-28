@@ -1,0 +1,9 @@
+[
+  {%- for role in (roles | list | flatten) %}
+    {
+      "name": "{{ role.name }}",
+      "id": "{{ role.id }}"
+    }
+    {%- if not loop.last %},{% endif %}
+  {%- endfor %}
+]

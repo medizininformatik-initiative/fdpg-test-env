@@ -1,0 +1,114 @@
+---
+# tasks file for fdpg-keycloak
+- name: Checkout FDPG Deployment
+  include_role:
+    name: common
+    tasks_from: checkout-deploy-repo
+  vars:
+    feasibility_deploy_version: readd-dsf
+
+- name: Setup Certificate
+  include_role:
+    name: common
+    tasks_from: certbot
+  vars:
+    certbot_register_email: mathias.ruehle@uni-leipzig.de
+    certbot_register_domain: "{{ fdpg_auth_domain }}"
+
+- name: Check if Keycloak environment config exists
+  stat:
+    path: "{{ deploy_path }}/feasibility-portal/keycloak/.env"
+  register: keycloak_env
+
+- name: Copy Keycloak default environment config
+  copy:
+    src: "{{ deploy_path }}/feasibility-portal/keycloak/.env.default"
+    dest: "{{ deploy_path }}/feasibility-portal/keycloak/.env"
+    owner: ubuntu
+    group: ubuntu
+    mode: u+rw,g-wx,o-rwx
+    remote_src: true
+  when: keycloak_env.stat.exists == false
+
+- name: Setup Keycloak
+  lineinfile:
+    path: "{{ deploy_path }}/feasibility-portal/keycloak/.env"
+    regexp: "{{ item.regexp }}"
+    line: "{{ item.line }}"
+  loop:
+  - regexp: '^FEASIBILITY_KC_DB_PW='
+    line:    "FEASIBILITY_KC_DB_PW={{ lookup('file', '{{ playbook_dir }}/secrets/keycloak_db_pw') }}"
+  - regexp: '^FEASIBILITY_KC_ADMIN_PW='
+    line:    "FEASIBILITY_KC_ADMIN_PW={{ lookup('file', '{{ playbook_dir }}/secrets/keycloak_admin_pw') }}"
+  - regexp: '^FEASIBILITY_KC_HTTP_RELATIVE_PATH='
+    line:    "FEASIBILITY_KC_HTTP_RELATIVE_PATH=/"
+  - regexp: '^FEASIBILITY_KC_HOSTNAME_URL='
+    line:    'FEASIBILITY_KC_HOSTNAME_URL=https://{{ fdpg_auth_domain }}'
+  - regexp: '^FEASIBILITY_KC_HOSTNAME_ADMIN_URL='
+    line:    'FEASIBILITY_KC_HOSTNAME_ADMIN_URL=https://{{ fdpg_auth_domain }}'
+
+- name: Start Keycloak Service
+  community.docker.docker_compose:
+    project_src: "{{ deploy_path }}/feasibility-portal/keycloak"
+    files:
+    - docker-compose.yml
+  register: keycloak_docker
+
+- name: Get keycloak network name
+  set_fact:
+    keycloak_network: "{{ keycloak_docker.services.auth[(keycloak_docker.services.auth.keys() | first)].networks.keys() | first }}"
+
+- name: Copy NGINX configuration
+  template:
+    src: nginx.conf.j2
+    dest: /home/ubuntu/deploy/nginx.conf
+    owner: ubuntu
+    group: ubuntu
+    mode: u=rw,g=r,o=r
+  register: nginx_conf
+
+- name: ReStart NGINX
+  docker_compose:
+    project_name: proxy
+    definition:
+      version: '3'
+      services:
+        nginx:
+          image: 'nginx:1.23'
+          networks:
+          - keycloak_network
+          ports:
+          - "443:8443"
+          volumes:
+          - "{{ certificate_path }}:/etc/nginx/cert.pem:ro"
+          - "{{ private_key_path }}:/etc/nginx/pkey.pem:ro"
+          - /home/ubuntu/deploy/nginx.conf:/etc/nginx/nginx.conf:ro
+          - /etc/letsencrypt/options-ssl-nginx.conf:/etc/nginx/options-ssl-nginx.conf:ro
+      networks:
+        keycloak_network:
+          name: "{{ keycloak_network }}"
+          external: true
+    restarted: true
+  when: nginx_conf.changed
+
+- name: Wait for Keycloak
+  uri:
+    url: "https://{{ fdpg_auth_domain }}"
+    follow_redirects: none
+    method: GET
+  register: _result
+  until: _result.status == 200
+  retries: 12 # 10 * 5s = 60s
+  delay: 5 # Every 5 seconds
+
+- name: Create Test User
+  include_tasks: create-user.yml
+  vars:
+    username: "test"
+    first_name: "User"
+    last_name: "Test"
+    email: "foo@bar.baz"
+    password: "{{ lookup('file', '{{ playbook_dir }}/secrets/gui_user_test_pw') }}"
+    roles:
+    - name: "FeasibilityUser"
+      id: "51cb7b69-d269-4872-b832-2d326e2e8658"

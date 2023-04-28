@@ -1,0 +1,7 @@
+---
+# tasks file for diz
+- name: Checkout DIZ Deployment
+  include_role:
+    name: common
+    tasks_from: checkout-deploy-repo
+    vars_from: checkout-deploy-repo

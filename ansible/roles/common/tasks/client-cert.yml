@@ -1,0 +1,32 @@
+---
+- name: Check if certificate file exists on remote host
+  stat:
+    path: "{{ cert_path }}"
+  register: cert_file
+
+- name: Create Client Private Key and CSR
+  command: |
+    openssl req -nodes -newkey rsa:4096 \
+      -keyout client.key \
+      -out client.csr \
+      -subj "/C=DE/ST=Berlin/L=Berlin/O=TMF e.V./OU=IT/CN={{ client_domain }}"
+  delegate_to: localhost
+  when: cert_file.stat.exists == false
+
+- name: Sign Client CSR and Create Client Certificate
+  command: |
+    openssl x509 -req \
+    -in client.csr \
+    -CA {{ role_path }}/files/fdpg-ca.crt \
+    -CAkey {{ role_path }}/files/fdpg-ca.key \
+    -CAcreateserial \
+    -out client.pem \
+    -days 9999 -sha256
+  delegate_to: localhost
+  when: cert_file.stat.exists == false
+
+- name: Copy certificate file to remote host
+  copy:
+    src: "{{ cert_path }}"
+    dest: "{{ cert_path }}"
+  when: cert_file.stat.exists == false

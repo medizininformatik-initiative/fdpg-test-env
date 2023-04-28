@@ -1,0 +1,24 @@
+- name: Common Setup
+  hosts: all
+  become: true
+  roles:
+  - user-ubuntu
+  - docker
+
+- name: Setup FDPG Portal
+  hosts: portal
+  become: true
+  roles:
+  - fdpg-portal
+
+- name: Setup FDPG Auth Server
+  hosts: fdpg_keycloak
+  become: true
+  roles:
+  - fdpg-keycloak
+
+- name: Setup DIZ Triangle
+  hosts: diz_triangle
+  become: true
+  roles:
+  - diz-triangle

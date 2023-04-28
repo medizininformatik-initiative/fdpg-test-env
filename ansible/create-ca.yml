@@ -1,0 +1,59 @@
+---
+- name: Create or Copy FDPG CA Credentials
+  hosts: fdpg
+  become: true
+  tasks:
+  - name: Install OpenSSL
+    apt:
+      name: openssl
+      state: present
+      update_cache: yes
+
+  - name: Check if Private Key exists remotely
+    stat:
+      path: /home/ubuntu/secrets/fdpg-ca.key
+    register: fdpg_pkey
+
+  - name: Check if CA exists remotely
+    stat:
+      path: /home/ubuntu/secrets/fdpg-ca.pem
+    register: fdpg_ca
+
+  - name: Check if Private Key exists locally
+    delegate_to: localhost
+    stat:
+      path: fdpg-ca/fdpg-ca.key
+    register: fdpg_pkey_local
+
+  - name: Check if CA exists locally
+    stat:
+      path: fdpg/fdpg-ca.pem
+    register: fdpg_ca_local
+
+  - name: Create Secrets Directory
+    become_user: ubuntu
+    file:
+      path: /home/ubuntu/secrets
+      state: directory
+
+  - name: Create Private Key and Certificate
+    become_user: ubuntu
+    shell: |
+      openssl req -x509 \
+      -sha256 -days 999999 \
+      -nodes \
+      -newkey rsa:8192 \
+      -subj "/CN=test.forschen-fuer-gesundheit.de/C=DE/L=Berlin" \
+      -keyout /home/ubuntu/secrets/fdpg-ca.key -out /home/ubuntu/secrets/fdpg-ca.pem
+    when: fdpg_pkey.stat.exists == false or fdpg_ca.stat.exists == false
+    register: create_ca
+
+  - name: Copy Private Key and Certificate to Localhost
+    fetch:
+      src: "{{ item }}"
+      dest: "{{ playbook_dir }}/secrets/{{ item }}"
+      flat: true
+    loop:
+    - /home/ubuntu/secrets/fdpg-ca.pem
+    - /home/ubuntu/secrets/fdpg-ca.key
+    when: create_ca.changed or fdpg_ca_local.stat.exists == false or fdpg_pkey_local.stat.exists == false

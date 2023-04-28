@@ -1,0 +1,56 @@
+---
+- name: Register certbot
+  shell: |
+    docker run --rm \
+               --name certbot-register \
+               -v /etc/letsencrypt:/etc/letsencrypt \
+               -v /var/lib/letsencrypt:/var/lib/letsencrypt \
+               certbot/certbot -n register --agree-tos --email {{ certbot_register_email }}
+    touch /etc/letsencrypt/.registered
+  args:
+    creates: /etc/letsencrypt/.registered
+  tags:
+    - certbot
+
+- name: Setup Certbot Container
+  docker_container:
+    name: certbot-renew
+    image: certbot/certbot
+    command: "certonly -q --standalone --preferred-challenges http --keep-until-expiring -d {{ certbot_register_domain }}
+                       {%- if (certbot_register_sans is defined) and (certbot_register_sans is iterable) %}
+                         {%- for san in certbot_register_sans %} -d {{ san }}
+                         {%- endfor %}
+                       {%- endif %}"
+    ports:
+    - "80:80"
+    volumes:
+    - /etc/letsencrypt:/etc/letsencrypt
+    - /var/lib/letsencrypt:/var/lib/letsencrypt
+
+- name: Setup CronJob for Certificate Renewal
+  cron:
+    name: certbot-renewal
+    job: /bin/bash -lc '/usr/bin/docker start certbot-renew'
+    minute: "0"
+    hour: "1"
+  tags:
+    - certbot
+
+- name: Get Certificate Path
+  shell: |
+    certbot certificates | \
+    grep -A 100 'Certificate Name: {{ certbot_register_domain }}' | \
+    grep -m 1 -o -P '(?<=Certificate Path: )[\w\./-]+'
+  register: cert_path
+
+- name: Get Private Key Path
+  shell: |
+    certbot certificates | \
+    grep -A 100 'Certificate Name: {{ certbot_register_domain }}' | \
+    grep -m 1 -o -P '(?<=Private Key Path: )[\w\./-]+'
+  register: pkey_path
+
+- name: Copy Certificate and Private Key Path to Facts
+  set_fact:
+    certificate_path: "{{ cert_path.stdout}}"
+    private_key_path: "{{ pkey_path.stdout }}"
