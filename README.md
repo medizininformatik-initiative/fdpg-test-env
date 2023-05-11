@@ -39,6 +39,10 @@ Host fdpg-keycloak
 Hostname 49.13.3.64
 User ubuntu
 
+Host fdpg-perf-test
+Hostname 49.13.17.192
+User ubuntu
+
 Host diz-1-dsf-fhir
 Hostname 49.12.77.194
 User ubuntu

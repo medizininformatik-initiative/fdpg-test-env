@@ -4,6 +4,9 @@ fdpg
 [fdpg_keycloak]
 fdpg-keycloak
 
+[perf_test]
+fdpg-perf-test
+
 [diz_dsf_fhir]
 diz-1-dsf-fhir
 
@@ -17,6 +20,9 @@ diz-1-triangle
 ansible_user=root
 
 [fdpg_keycloak:vars]
+ansible_user=root
+
+[perf_test:vars]
 ansible_user=root
 
 [diz_dsf_fhir:vars]

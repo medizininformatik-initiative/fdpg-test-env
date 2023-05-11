@@ -24,3 +24,8 @@ module "fdpg" {
   source = "./modules/fdpg"
   ssh_keys = [ hcloud_ssh_key.akiel.id, hcloud_ssh_key.mruehle.id, hcloud_ssh_key.jgruendner.id ]
 }
+
+module "perf_test" {
+  source = "./modules/perf-test"
+  ssh_keys = [ hcloud_ssh_key.akiel.id, hcloud_ssh_key.mruehle.id, hcloud_ssh_key.jgruendner.id ]
+}
