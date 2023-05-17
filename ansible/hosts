@@ -1,4 +1,4 @@
-[fdpg]
+[portal]
 fdpg
 
 [fdpg_keycloak]
@@ -16,7 +16,7 @@ diz-1-dsf-bpe
 [diz_triangle]
 diz-1-triangle
 
-[fdpg:vars]
+[portal:vars]
 ansible_user=root
 
 [fdpg_keycloak:vars]

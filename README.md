@@ -59,5 +59,13 @@ User ubuntu
 ### Run all Playbooks
 
 ```sh
-ansible-playbook -i hosts docker.yml user-ubuntu.yml modules/diz/network.yml
+cd ansible
+ansible-playbook -i hosts site.yml
+```
+
+### Add new role
+
+```sh
+cd ansible
+ansible-galaxy init roles/<role-name>
 ```

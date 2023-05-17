@@ -1,0 +1,8 @@
+---
+# variables for all hosts
+deploy_path: /home/ubuntu/deploy
+fdpg_portal_domain: fdpg.test.forschen-fuer-gesundheit.de
+fdpg_portal_aktin_domain: aktin.fdpg.test.forschen-fuer-gesundheit.de
+fdpg_portal_dsf_domain: dsf.fdpg.test.forschen-fuer-gesundheit.de
+fdpg_auth_domain: auth.fdpg.test.forschen-fuer-gesundheit.de
+diz_1_dsf_domain: dsf.diz1.test.forschen-fuer-gesundheit.de
