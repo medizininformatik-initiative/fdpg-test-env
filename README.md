@@ -16,6 +16,16 @@ terraform init
 
 Currently, the Terraform state is not shared. So only Alex can use Terraform right now.
 
+### Choose Terraform Workspace
+
+```sh
+terraform workspace select default
+```
+
+```sh
+terraform workspace select test
+```
+
 ### Apply Terraform
 
 ```sh

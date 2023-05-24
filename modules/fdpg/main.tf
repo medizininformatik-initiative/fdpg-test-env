@@ -1,5 +1,5 @@
 resource "hcloud_firewall" "fdpg" {
-  name = "fdpg"
+  name = terraform.workspace == "default" ? "fdpg" : format("fdpg-%s", terraform.workspace)
   rule {
     direction  = "in"
     protocol   = "tcp"
@@ -32,7 +32,7 @@ resource "hcloud_firewall" "fdpg" {
 }
 
 resource "hcloud_primary_ip" "fdpg" {
-  name          = "fdpg"
+  name          = terraform.workspace == "default" ? "fdpg" : format("fdpg-%s", terraform.workspace)
   type          = "ipv4"
   datacenter    = "fsn1-dc14"
   assignee_type = "server"
@@ -40,7 +40,7 @@ resource "hcloud_primary_ip" "fdpg" {
 }
 
 resource "hcloud_server" "fdpg" {
-  name         = "fdpg"
+  name         = terraform.workspace == "default" ? "fdpg" : format("fdpg-%s", terraform.workspace)
   image        = "ubuntu-22.04"
   server_type  = "cx41"
   datacenter   = "fsn1-dc14"
@@ -55,7 +55,7 @@ resource "hcloud_server" "fdpg" {
 }
 
 resource "hcloud_primary_ip" "fdpg_keycloak" {
-  name          = "fdpg-keycloak"
+  name          = terraform.workspace == "default" ? "fdpg-keycloak" : format("fdpg-keycloak-%s", terraform.workspace)
   type          = "ipv4"
   datacenter    = "fsn1-dc14"
   assignee_type = "server"
@@ -63,7 +63,7 @@ resource "hcloud_primary_ip" "fdpg_keycloak" {
 }
 
 resource "hcloud_server" "fdpg-keycloak" {
-  name         = "fdpg-keycloak"
+  name         = terraform.workspace == "default" ? "fdpg-keycloak" : format("fdpg-keycloak-%s", terraform.workspace)
   image        = "ubuntu-22.04"
   server_type  = "cx11"
   datacenter   = "fsn1-dc14"
