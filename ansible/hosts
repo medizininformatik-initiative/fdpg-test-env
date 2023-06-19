@@ -12,12 +12,15 @@ fdpg-perf-test
 
 [diz_dsf_fhir]
 diz-1-dsf-fhir
+diz-2-dsf-fhir
 
 [diz_dsf_bpe]
 diz-1-dsf-bpe
+diz-2-dsf-bpe
 
 [diz_triangle]
 diz-1-triangle
+diz-2-triangle
 
 [portal:vars]
 ansible_user=root

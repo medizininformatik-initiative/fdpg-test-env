@@ -68,6 +68,18 @@ User ubuntu
 Host diz-1-triangle
 Hostname 167.235.246.101
 User ubuntu
+
+Host diz-1-dsf-fhir
+Hostname 49.12.77.194
+User ubuntu
+
+Host diz-1-dsf-bpe
+Hostname 128.140.80.15
+User ubuntu
+
+Host diz-1-triangle
+Hostname 167.235.246.101
+User ubuntu
 ```
 
 ### Run all Playbooks
