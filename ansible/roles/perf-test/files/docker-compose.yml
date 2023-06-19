@@ -1,0 +1,16 @@
+services:
+  blaze:
+    image: "samply/blaze:develop"
+    environment:
+      BASE_URL: "http://49.13.17.192:8080"
+      JAVA_TOOL_OPTIONS: "-Xmx4g -XX:+UseG1GC -XX:MaxGCPauseMillis=50"
+      DB_BLOCK_CACHE_SIZE: "2048"
+      DB_RESOURCE_CACHE_SIZE: "2000000"
+      DB_RESOURCE_HANDLE_CACHE_SIZE: "0"
+      DB_RESOURCE_STORE_KV_THREADS: "8"
+      LOG_LEVEL: "debug"
+    ports:
+    - "8080:8080"
+    - "8081:8081"
+    volumes:
+    - "/home/ubuntu/data/data-100k:/app/data"

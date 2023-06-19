@@ -4,6 +4,9 @@ fdpg
 [fdpg_keycloak]
 fdpg-keycloak
 
+[monitoring]
+fdpg-monitoring
+
 [perf_test]
 fdpg-perf-test
 
@@ -20,6 +23,9 @@ diz-1-triangle
 ansible_user=root
 
 [fdpg_keycloak:vars]
+ansible_user=root
+
+[monitoring:vars]
 ansible_user=root
 
 [perf_test:vars]

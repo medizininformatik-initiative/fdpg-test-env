@@ -2,8 +2,8 @@
   hosts: all
   become: true
   roles:
-  - user-ubuntu
   - docker
+  - user-ubuntu
 
 - name: Setup FDPG Portal
   hosts: portal
@@ -34,3 +34,20 @@
   become: true
   roles:
   - diz-dsf-bpe
+
+- name: Setup Monitoring
+  hosts: monitoring
+  become: true
+  roles:
+  - monitoring
+  - node-exporter
+
+- name: Setup Perf Test
+  hosts: perf_test
+  become: true
+  roles:
+  - perf-test
+  - node-exporter
+  - blazectl
+  - role: blaze-repo
+    become_user: ubuntu

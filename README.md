@@ -49,6 +49,10 @@ Host fdpg-keycloak
 Hostname 49.13.3.64
 User ubuntu
 
+Host fdpg-monitoring
+Hostname 49.12.187.254
+User ubuntu
+
 Host fdpg-perf-test
 Hostname 49.13.17.192
 User ubuntu

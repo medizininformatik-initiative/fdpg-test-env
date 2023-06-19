@@ -1,0 +1,14 @@
+---
+- name: Download blazectl
+  get_url:
+    url: "https://github.com/samply/blazectl/releases/download/v{{ version }}/blazectl-{{ version }}-linux-{{ arch }}.tar.gz"
+    dest: "/tmp/blazectl.tar.gz"
+
+- name: Extract blazectl
+  unarchive:
+    src: "/tmp/blazectl.tar.gz"
+    dest: "/usr/local/bin"
+    creates: "/usr/local/bin/blazectl"
+    remote_src: yes
+    owner: root
+    group: root

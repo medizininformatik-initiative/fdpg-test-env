@@ -1,0 +1,81 @@
+---
+- name: Create /etc/prometheus
+  tags:
+  - prometheus
+  file:
+    path: /etc/prometheus
+    state: directory
+
+- name: Create prometheus.yml
+  tags:
+  - prometheus
+  copy:
+    dest: /etc/prometheus/prometheus.yml
+    src: "{{ role_path }}/files/prometheus.yml"
+  notify: restart prometheus
+
+- name: Install prometheus.service
+  tags:
+  - prometheus
+  copy:
+    dest: /etc/systemd/system/prometheus.service
+    content: |
+      [Unit]
+      Description=Prometheus
+      After=docker.service
+      Requires=docker.service
+      
+      [Service]
+      ExecStartPre=-/usr/bin/docker kill prometheus
+      ExecStartPre=-/usr/bin/docker rm prometheus
+      ExecStartPre=/usr/bin/docker pull prom/prometheus:{{ prometheus_version }}
+      ExecStart=/usr/bin/docker run --name prometheus -p 9090:9090 \
+        -v /etc/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro \
+        -v prometheus-data:/prometheus \
+        prom/prometheus:{{ prometheus_version }}
+      ExecStop=/usr/bin/docker stop prometheus
+      
+      [Install]
+      WantedBy=multi-user.target
+  notify: restart prometheus
+
+- name: Start prometheus.service
+  ansible.builtin.systemd:
+    daemon_reload: true
+    state: started
+    name: prometheus
+
+- name: Install grafana.service
+  tags:
+  - grafana
+  copy:
+    dest: /etc/systemd/system/grafana.service
+    content: |
+      [Unit]
+      Description=Grafana
+      After=docker.service
+      Requires=docker.service
+      
+      [Service]
+      ExecStartPre=-/usr/bin/docker kill grafana
+      ExecStartPre=-/usr/bin/docker rm grafana
+      ExecStartPre=/usr/bin/docker pull grafana/grafana-oss:{{ grafana_version }}
+      ExecStart=/usr/bin/docker run --name grafana -p 3000:3000 -v grafana-storage:/var/lib/grafana \
+        -e GF_AUTH_ANONYMOUS_ENABLED=true \
+        -e GF_AUTH_ANONYMOUS_ORG_NAME=FDPG \
+        -e GF_AUTH_ANONYMOUS_ORG_ROLE=Viewer \
+        -e GF_USERS_ALLOW_SIGN_UP=false \
+        grafana/grafana-oss:{{ grafana_version }}
+      ExecStop=/usr/bin/docker stop grafana
+      
+      [Install]
+      WantedBy=multi-user.target
+  notify: restart grafana
+
+- name: Start grafana.service
+  tags:
+  - grafana
+  ansible.builtin.systemd:
+    daemon_reload: true
+    state: started
+    name: grafana

@@ -1,0 +1,15 @@
+global:
+  scrape_interval: 15s
+
+scrape_configs:
+- job_name: 'node'
+  static_configs:
+  - targets: ['49.13.17.192:9100']
+  - labels:
+      instance: 'blaze-perf-test'
+
+- job_name: 'blaze'
+  static_configs:
+  - targets: ['49.13.17.192:8081']
+  - labels:
+      instance: 'blaze-perf-test'

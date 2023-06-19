@@ -1,0 +1,29 @@
+---
+- name: Create /home/ubuntu/srv/data-100k
+  file:
+    path: /home/ubuntu/srv/data-100k
+    state: directory
+
+- name: Copy Docker Compose File
+  copy:
+    src: "{{ role_path }}/files/docker-compose.yml"
+    dest: /home/ubuntu/srv/data-100k/docker-compose.yml
+    owner: ubuntu
+    group: ubuntu
+
+- name: Create /home/ubuntu/data/data-100k
+  file:
+    path: /home/ubuntu/data/data-100k
+    state: directory
+
+- name: Install jq
+  apt:
+    name:
+    - jq
+    state: present
+
+- name: Install iostat
+  apt:
+    name:
+    - sysstat
+    state: present
