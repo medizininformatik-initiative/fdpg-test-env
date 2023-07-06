@@ -1,0 +1,171 @@
+---
+- name: Upload Certificate
+  include_role:
+    name: common
+    tasks_from: get-storage-file
+  vars:
+    storage_file_path: "{{ item.src }}"
+    host_file_path: "{{ item.dest }}"
+  loop:
+  - src:  "secrets/dsf/fdpg/bpe.fdpg.test.ffg.de.cer"
+    dest: "{{ secrets_path }}/bpe.fdpg.test.ffg.de.cer"
+  - src:  "secrets/dsf/fdpg/bpe.fdpg.test.ffg.de.key"
+    dest: "{{ secrets_path }}/bpe.fdpg.test.ffg.de.key"
+  - src:  "secrets/dsf/fdpg/db_bpe_user.password"
+    dest: "{{ secrets_path }}/db_bpe_user.password"
+  - src:  "secrets/dsf/fdpg/db_bpe_user_camunda.password"
+    dest: "{{ secrets_path }}/db_bpe_user_camunda.password"
+  - src:  "secrets/dsf/fdpg/db_fhir_user.password"
+    dest: "{{ secrets_path }}/db_fhir_user.password"
+  - src:  "secrets/dsf/fdpg/db_fhir_user_permanent_delete.password"
+    dest: "{{ secrets_path }}/db_fhir_user_permanent_delete.password"
+  - src:  "secrets/dsf/fdpg/db_liquibase.password"
+    dest: "{{ secrets_path }}/db_liquibase.password"
+  - src:  "secrets/domain/trusted_cas.pem"
+    dest: "{{ secrets_path }}/trusted_cas.pem"
+
+- name: Generate Backend Certificate Thumbprint
+  shell:
+    cmd: openssl x509 -noout -fingerprint -sha512 -inform pem -in {{ item }} | tr \[:upper:\] \[:lower:\] | tr -d ':' | sed 's/sha512 fingerprint=//'
+  loop:
+  - "{{ secrets_path }}/bpe.fdpg.test.ffg.de.cer"
+  - "{{ secrets_path }}/backend.fdpg.test.ffg.de.cer"
+  register: cert_thumbprint
+  changed_when: false
+
+- name: Create folders
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ deploy_user }}"
+    group: "{{ deploy_user }}"
+    mode: "777"
+  loop:
+  - "{{ dsf_path }}/bpe/cache"
+  - "{{ dsf_path }}/bpe/last_event"
+  - "{{ dsf_path }}/bpe/log"
+  - "{{ dsf_path }}/fhir/log"
+  - "{{ dsf_path }}/process"
+
+- name: FDPG DSF BPE - Install process plugins
+  include_role:
+    name: common
+    tasks_from: dsf-bpe-install-plugins
+  vars:
+    process_plugin_folder_path: "{{ dsf_path }}/process"
+    process_plugins:
+    - name: ping-pong
+      url: "https://github.com/datasharingframework/dsf-process-ping-pong"
+      version: "{{ dsf_process_ping_pong_version }}"
+      file:
+        basename: "dsf-process-ping-pong"
+        extension: "jar"
+    - name: feasibility
+      url: "https://github.com/medizininformatik-initiative/feasibility-dsf-process"
+      version: "{{ dsf_process_feasibility_version }}"
+      file:
+        basename: "feasibility-dsf-process"
+        extension: "jar"
+    - name: report
+      url: "https://github.com/medizininformatik-initiative/mii-process-report"
+      version: "{{ dsf_process_report_version }}"
+      file:
+        basename: "mii-process-report"
+        extension: "jar"
+
+- name: FDPG DSF BPE - Get environment config stats
+  stat:
+    path: "{{ dsf_path }}/.env"
+  register: dsf_bpe_env
+
+- name: FDPG DSF BPE - Get default environment config stats
+  stat:
+    path: "{{ dsf_path }}/.env.default"
+  register: dsf_bpe_env_default
+
+- name: FDPG DSF BPE - Copy default environment config
+  copy:
+    src: "{{ dsf_path }}/.env.default"
+    dest: "{{ dsf_path }}/.env"
+    owner: ubuntu
+    group: ubuntu
+    mode: u+rw,g-wx,o-rwx
+    remote_src: true
+  when: dsf_bpe_env.stat.exists == false or dsf_bpe_env.stat.ctime < dsf_bpe_env_default.stat.ctime
+
+- name: Set environment variables
+  include_role:
+    name: common
+    tasks_from: set-env
+  vars:
+    path: "{{ dsf_path }}/.env"
+    variables:
+    - name: FEASIBILITY_DSF_FHIR_SERVER_BASE_URL
+      value: "https://{{ fdpg_portal_dsf_domain }}/fhir"
+    - name: FEASIBILITY_DSF_FHIR_LOG_FOLDER_PATH
+      value: "{{ dsf_path }}/fhir/log"
+    - name: FEASIBILITY_DSF_FHIR_ORGANIZATION_IDENTIFIER
+      value: "forschen-fuer-gesundheit.de"
+    - name: FEASIBILITY_DSF_FHIR_ORGANIZATION_THUMBPRINT
+      value: "{{ cert_thumbprint.results[0].stdout }}"
+    - name: FEASIBILITY_DSF_FHIR_BACKEND_THUMBPRINT
+      value: "{{ cert_thumbprint.results[1].stdout }}"
+    - name: FEASIBILITY_DSF_CLIENT_TRUST_CERTIFICATES_FILE
+      value: "{{ secrets_path }}/trusted_cas.pem"
+    - name: FEASIBILITY_DSF_CLIENT_CERTIFICATE_FILE
+      value: "{{ secrets_path }}/bpe.fdpg.test.ffg.de.cer"
+    - name: FEASIBILITY_DSF_CLIENT_CERTIFICATE_PRIVATE_KEY_FILE
+      value: "{{ secrets_path }}/bpe.fdpg.test.ffg.de.key"
+    - name: FEASIBILITY_DSF_BPE_CACHE_FOLDER_PATH
+      value: "{{ dsf_path }}/bpe/cache"
+    - name: FEASIBILITY_DSF_BPE_LAST_EVENT_FOLDER_PATH
+      value: "{{ dsf_path }}/bpe/last_event"
+    - name: FEASIBILITY_DSF_BPE_LOG_FOLDER_PATH
+      value: "{{ dsf_path }}/bpe/log"
+    - name: FEASIBILITY_DSF_BPE_PROCESS_PLUGINS_DIRECTORY_PATH
+      value: "{{ dsf_path }}/process"
+    - name: FEASIBILITY_DSF_BPE_DB_USER_PASSWORD_FILE
+      value: "{{ secrets_path }}/db_bpe_user.password"
+    - name: FEASIBILITY_DSF_BPE_DB_USER_CAMUNDA_PASSWORD_FILE
+      value: "{{ secrets_path }}/db_bpe_user_camunda.password"
+    - name: FEASIBILITY_DSF_FHIR_DB_USER_PASSWORD_FILE
+      value: "{{ secrets_path }}/db_fhir_user.password"
+    - name: FEASIBILITY_DSF_FHIR_DB_USER_PERMANENT_DELETE_PASSWORD_FILE
+      value: "{{ secrets_path }}/db_fhir_user_permanent_delete.password"
+    - name: FEASIBILITY_DSF_DB_LIQUIBASE_PASSWORD_FILE
+      value: "{{ secrets_path }}/db_liquibase.password"
+    - name: FEASIBILITY_DSF_BPE_PROCESS_EXCLUDED
+      value: |-
+        medizininformatik-initiativede_reportAutostart|{{ dsf_process_report_version | regex_replace('^(\d+\.\d+)\.\d+\.\d+.*$', '\1') }}
+        medizininformatik-initiativede_reportSend|{{ dsf_process_report_version | regex_replace('^(\d+\.\d+)\.\d+\.\d+.*$', '\1') }}
+
+- name: Remove unused configuration entries
+  lineinfile:
+    path: "{{ dsf_path }}/docker-compose.yml"
+    regexp: "{{ item }}"
+    state: absent
+  loop:
+  - 'app_client_certificate_private_key.pem.password'
+  - '- dsf-zars-fhir-proxy'
+
+- name: Disable proxy
+  ansible.builtin.replace:
+    path: "{{ dsf_path }}/docker-compose.yml"
+    after: "{{ item.after }}"
+    before: "{{ item.before }}"
+    regexp: '^[^#](.+)$'
+    replace: '# \1'
+  loop:
+  - after: '# -+ Proxy -+'
+    before: '# -+ FHIR -+'
+  - after: '# -+ Proxy Secrets -+'
+    before: '# -+ FHIR Secrets -+'
+
+- name: Start DSF
+  community.docker.docker_compose:
+    project_src: "{{ dsf_path }}"
+    project_name: "{{ project_name }}"
+    files:
+    - docker-compose.yml
+  environment:
+    COMPOSE_IGNORE_ORPHANS: "1"

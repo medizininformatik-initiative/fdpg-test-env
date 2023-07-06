@@ -1,2 +1,33 @@
 ---
 # tasks file for diz
+- name: Checkout FDPG Deployment
+  include_role:
+    name: common
+    tasks_from: checkout-deploy-repo
+  vars:
+    feasibility_deploy_version: readd-dsf
+
+- name: Deploy FHIR server
+  include_tasks: fhir-server.yml
+  vars:
+    fhir_server_path: "{{ deploy_path }}/feasibility-triangle/fhir-server"
+    project_name: triangle
+
+- name: Deploy flare
+  include_tasks: flare.yml
+  vars:
+    flare_path: "{{ deploy_path }}/feasibility-triangle/flare"
+    project_name: triangle
+
+- name: Deploy reverse proxy
+  include_tasks: rev-proxy.yml
+  vars:
+    rev_proxy_path: "{{ deploy_path }}/feasibility-triangle/rev-proxy"
+    project_name: triangle
+
+- name: Deploy aktin client
+  include_tasks: aktin-client.yml
+  vars:
+    aktin_client_path: "{{ deploy_path }}/feasibility-triangle/aktin-client"
+    project_name: triangle
+  when: aktin is defined and aktin == "true"

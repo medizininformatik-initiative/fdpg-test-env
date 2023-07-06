@@ -3,35 +3,64 @@
   become: true
   roles:
   - docker
-  - user-ubuntu
+  - role: user-ubuntu
+    vars:
+      add_authorized_keys:
+      - akiel
+      - jgruendner
+      - mruehle
+
+- name: Add additional ssh keys to FDPG and DIZ
+  hosts:
+  - portal
+  - keycloak
+  - diz_triangle
+  - diz_dsf_fhir
+  - diz_dsf_bpe
+  roles:
+  - role: user-ubuntu
+    vars:
+      add_authorized_keys:
+      - rwettstein
+
+- name: Setup DIZ internal network
+  hosts:
+  - diz_dsf_bpe
+  - diz_triangle
+  tasks:
+  - name: Add bpe entry to /etc/hosts
+    lineinfile:
+      path: /etc/hosts
+      line: "10.0.0.2 bpe.diz.local"
+      state: present
+  - name: Add triangle entry to /etc/hosts
+    lineinfile:
+      path: /etc/hosts
+      line: "10.0.0.3 triangle.diz.local"
+      state: present
 
 - name: Setup FDPG Portal
   hosts: portal
-  become: true
   roles:
   - fdpg-portal
 
 - name: Setup FDPG Auth Server
-  hosts: fdpg_keycloak
-  become: true
+  hosts: keycloak
   roles:
   - fdpg-keycloak
 
 - name: Setup DIZ Triangle
   hosts: diz_triangle
-  become: true
   roles:
   - diz-triangle
 
 - name: Setup DIZ DSF FHIR
   hosts: diz_dsf_fhir
-  become: true
   roles:
   - diz-dsf-fhir
 
 - name: Setup DIZ DSF BPE
   hosts: diz_dsf_bpe
-  become: true
   roles:
   - diz-dsf-bpe
 
@@ -40,14 +69,12 @@
   become: true
   roles:
   - monitoring
-  - node-exporter
 
 - name: Setup Perf Test
   hosts: perf_test
   become: true
   roles:
   - perf-test
-  - node-exporter
   - blazectl
   - role: blaze-repo
     become_user: ubuntu

@@ -1,0 +1,29 @@
+---
+- name: FHIR Server - Get environment config stats
+  stat:
+    path: "{{ fhir_server_path }}/.env"
+  register: fhir_env
+
+- name: FHIR Server - Get Keycloak default environment config stats
+  stat:
+    path: "{{ fhir_server_path }}/.env.default"
+  register: fhir_env_default
+
+- name: FHIR Server - Copy Keycloak default environment config
+  copy:
+    src: "{{ fhir_server_path }}/.env.default"
+    dest: "{{ fhir_server_path }}/.env"
+    owner: ubuntu
+    group: ubuntu
+    mode: u+rw,g-wx,o-rwx
+    remote_src: true
+  when: fhir_env.stat.exists == false or fhir_env.stat.ctime < fhir_env_default.stat.ctime
+
+- name: FHIR Server - Start container
+  community.docker.docker_compose:
+    project_src: "{{ fhir_server_path }}"
+    project_name: "{{ project_name }}"
+    files:
+    - docker-compose.yml
+  environment:
+    COMPOSE_IGNORE_ORPHANS: "1"

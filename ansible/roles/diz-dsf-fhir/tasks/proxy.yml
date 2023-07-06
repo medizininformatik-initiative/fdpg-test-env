@@ -1,0 +1,42 @@
+---
+- name: DSF FHIR - Upload proxy secrets
+  include_role:
+    name: common
+    tasks_from: get-storage-file
+  vars:
+    storage_file_path: "{{ item.src }}"
+    host_file_path: "{{ item.dest }}"
+  loop:
+  - src:  "secrets/domain/test.ffg.de.cer"
+    dest: "{{ secrets_path }}/dsf.diz-{{ instance }}.test.ffg.de.cer"
+  - src:  "secrets/domain/test.ffg.de.key"
+    dest: "{{ secrets_path }}/dsf.diz-{{ instance }}.test.ffg.de.key"
+  - src:  "secrets/domain/trusted_cas.pem"
+    dest: "{{ secrets_path }}/trusted_cas.pem"
+
+- name: DSF FHIR - Setup environment variables
+  include_role:
+    name: common
+    tasks_from: set-env
+  vars:
+    path: "{{ dsf_fhir_path }}/.env"
+    variables:
+    - name: FEASIBILITY_DSF_PROXY_CERTIFICATE_AND_INTERMEDIATE_CAS_FILE
+      value: "{{ secrets_path }}/dsf.diz-{{ instance }}.test.ffg.de.cer"
+    - name: FEASIBILITY_DSF_PROXY_CERTIFICATE_PRIVATE_KEY_FILE
+      value: "{{ secrets_path }}/dsf.diz-{{ instance }}.test.ffg.de.key"
+    - name: FEASIBILITY_DSF_PROXY_TRUSTED_CLIENT_CAS_FILE
+      value: "{{ secrets_path }}/trusted_cas.pem"
+
+- name: DSF FHIR - Set proxy domain
+  lineinfile:
+    path: "{{ dsf_fhir_path }}/proxy/nginx.conf"
+    regexp: '^(\s*)server_name\s*(?!{{ lookup("vars", "diz_" + instance + "_dsf_domain") }})'
+    line: '\1server_name {{ lookup("vars", "diz_" + instance + "_dsf_domain") }};'
+    backrefs: true
+
+- name: DSF FHIR - Set proxy port
+  lineinfile:
+    path: "{{ dsf_fhir_path }}/docker-compose.yml"
+    insertafter: "^  dsf-dic-fhir-proxy:"
+    line: '    ports: [ "443:8443" ]'

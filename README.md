@@ -100,6 +100,26 @@ cd ansible
 ansible-playbook -i hosts site.yml
 ```
 
+### Prerequisites
+
+For accessing the test environment hosts and secrets you need your personal SSH public key being added to the Hetzner Cloud and deployed to the hosts and the Hetzner Storage Box by an already permitted user.
+
+### Discover Facts
+
+```sh
+ansible -i hosts -m ansible.builtin.setup <hostname>
+```
+
+### Run Playbooks for Individual Hosts or Host Groups
+
+```sh
+cd <PROJECT_DIR>/ansible
+ansible-playbook -i hosts site.yml --limit monitoring,diz-1-dsf-fhir
+```
+Possible hosts and host groups are listed in `ansible/site.yml`.
+
+## Development
+
 ### Add new role
 
 ```sh

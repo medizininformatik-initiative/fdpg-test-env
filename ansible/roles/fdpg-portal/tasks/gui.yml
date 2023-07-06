@@ -1,0 +1,74 @@
+---
+- name: Get certifcates
+  include_role:
+    name: common
+    tasks_from: get-storage-file
+  vars:
+    storage_file_path: "{{ item.src }}"
+    host_file_path: "{{ item.dest }}"
+  loop:
+  - src:  "secrets/domain/test.ffg.de.cer"
+    dest: "{{ secrets_path }}/fdpg.test.ffg.de.cer"
+  - src:  "secrets/domain/test.ffg.de.key"
+    dest: "{{ secrets_path }}/fdpg.test.ffg.de.key"
+  - src:  "secrets/domain/trusted_cas.pem"
+    dest: "{{ secrets_path }}/trusted_cas.pem"
+
+- name: Copy Default Deploy Configuration
+  copy:
+    src: "{{ gui_path }}/deploy-config.json.default"
+    dest: "{{ gui_path }}/deploy-config.json"
+    remote_src: true
+
+- name: Set Auth Base URL
+  replace:
+    path: "{{ gui_path }}/deploy-config.json"
+    after: '{{ item.after }}'
+    before: '{{ item.before }}'
+    regexp: '{{ item.regexp }}'
+    replace: '{{ item.replace }}'
+  loop:
+  - after: '\s*"auth"'
+    before: '\s*"legal"'
+    regexp: '\s*"baseUrl":\s*"https://localhost/auth"'
+    replace: '"baseUrl": "https://{{ fdpg_auth_domain }}"'
+  - after: '\s*"uiBackendApi"'
+    before: '\s*"auth"'
+    regexp: '\s*"baseUrl":\s*"https://localhost/api/v3"'
+    replace: '"baseUrl": "https://{{ fdpg_portal_domain }}/api/v3"'
+
+- name: Configure NGINX
+  template:
+    src: nginx.conf.j2
+    dest: "{{ gui_path }}/nginx.conf"
+    owner: "{{ deploy_user }}"
+    group: "{{ deploy_user }}"
+    mode: u=rw,g=r,o=r
+
+- name: Set environment variables
+  template:
+    src: gui.env.j2
+    dest: "{{ gui_path }}/.env"
+    owner: "{{ deploy_user }}"
+    group: "{{ deploy_user }}"
+    mode: u=rw,g=r,o=r
+  vars:
+    certificate: "{{ secrets_path }}/fdpg.test.ffg.de.cer"
+    private_key: "{{ secrets_path }}/fdpg.test.ffg.de.key"
+    trusted_cas: "{{ secrets_path }}/trusted_cas.pem"
+
+- name: Enable trusted ca file
+  replace:
+    path: "{{ gui_path }}/docker-compose.yml"
+    regexp: '#(.*FEASIBILITY_GUI_TRUSTED_CA_CERTIFICATE_FILE)'
+    replace: '\1'
+
+- name: Start GUI nginx
+  community.docker.docker_compose:
+    project_src: "{{ gui_path }}"
+    project_name: fdpg
+    files:
+    - docker-compose.yml
+    restarted: true
+  environment:
+    COMPOSE_IGNORE_ORPHANS: "1"

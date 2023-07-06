@@ -1,7 +1,7 @@
 [portal]
 fdpg
 
-[fdpg_keycloak]
+[keycloak]
 fdpg-keycloak
 
 [monitoring]
@@ -19,13 +19,13 @@ diz-1-dsf-bpe
 diz-2-dsf-bpe
 
 [diz_triangle]
-diz-1-triangle
-diz-2-triangle
+diz-1-triangle aktin=true
+diz-2-triangle aktin=false
 
 [portal:vars]
 ansible_user=root
 
-[fdpg_keycloak:vars]
+[keycloak:vars]
 ansible_user=root
 
 [monitoring:vars]

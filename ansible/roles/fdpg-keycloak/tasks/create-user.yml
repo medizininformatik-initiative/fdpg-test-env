@@ -1,0 +1,68 @@
+---
+- name: Get Keycloak Auth Token
+  uri:
+    url: https://{{ fdpg_auth_domain }}/realms/master/protocol/openid-connect/token
+    method: POST
+    validate_certs: false
+    body: "username=admin&password={{ lookup('file', '{{ playbook_dir }}/secrets/keycloak_admin_pw') }}&grant_type=password&client_id=admin-cli"
+    status_code: 200
+    headers:
+      Content-Type: "application/x-www-form-urlencoded"
+  register: access_token_result
+
+- name: Extract Keycloak Auth Token
+  set_fact:
+    access_token_bearer: "{{ access_token_result.json | json_query('access_token') }}"
+
+- name: Check for Existing Keycloak User '{{ username }}'
+  uri:
+    url: https://{{ fdpg_auth_domain }}/admin/realms/feasibility/users?username={{ username }}&exact=true
+    method: GET
+    validate_certs: false
+    status_code: 200
+    headers:
+      Authorization: "Bearer {{ access_token_bearer }}"
+    return_content: true
+  register: keycloak_user_info
+
+- name: Create Keycloak User '{{ username }}'
+  uri:
+    url: https://{{ fdpg_auth_domain }}/admin/realms/feasibility/users
+    method: POST
+    validate_certs: false
+    body: "{{ lookup('template','kc-user.json.j2') }}"
+    body_format: json
+    status_code: 201
+    headers:
+      Authorization: "Bearer {{ access_token_bearer }}"
+    return_content: true
+  when: (keycloak_user_info.json is undefined) or ((keycloak_user_info.json | type_debug == 'list') and (keycloak_user_info.json | length == 0))
+  register: keycloak_user
+
+- name: Get Role IDs
+  uri:
+    url: https://{{ fdpg_auth_domain }}/admin/realms/feasibility/roles?search={{ item.name }}
+    method: GET
+    validate_certs: false
+    status_code: 200
+    headers:
+      Authorization: "Bearer {{ access_token_bearer }}"
+    return_content: true
+  register: keycloak_role
+  failed_when: keycloak_role.json is not defined or (keycloak_role.json | json_query("[?name == '" + item.name + "']") | length) == 0
+  loop: "{{ roles | list | flatten }}"
+  when: roles is defined
+
+- name: Assign Roles to Keycloak User '{{ username }}'
+  uri:
+    url: "{{ keycloak_user.location if keycloak_user.location is defined else 'https://' + fdpg_auth_domain + '/admin/realms/feasibility/users/' + keycloak_user_info.json[0].id }}/role-mappings/realm"
+    method: POST
+    validate_certs: false
+    body: "{{ lookup('template','kc-role-mapping.json.j2') }}"
+    body_format: json
+    status_code: 204
+    headers:
+      Authorization: "Bearer {{ access_token_bearer }}"
+    return_content: true
+  register: keycloak_role_mapping
+  when: (keycloak_user.location is defined or (keycloak_user_info.json is defined and (keycloak_user_info.json | length) == 1)) and roles is defined
