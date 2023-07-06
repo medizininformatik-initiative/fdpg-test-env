@@ -22,6 +22,11 @@ module "fdpg" {
   ssh_keys = [data.hcloud_ssh_key.akiel.id, data.hcloud_ssh_key.mruehle.id, data.hcloud_ssh_key.jgruendner.id]
 }
 
+module "dms" {
+  source   = "./modules/dms"
+  ssh_keys = [data.hcloud_ssh_key.akiel.id, data.hcloud_ssh_key.mruehle.id, data.hcloud_ssh_key.jgruendner.id]
+}
+
 module "monitoring" {
   source   = "./modules/monitoring"
   ssh_keys = [data.hcloud_ssh_key.akiel.id, data.hcloud_ssh_key.mruehle.id, data.hcloud_ssh_key.jgruendner.id]

@@ -57,6 +57,10 @@ Host fdpg-perf-test
 Hostname 49.13.17.192
 User ubuntu
 
+Host dms-dsf-fhir
+Hostname 162.55.171.40
+User ubuntu
+
 Host diz-1-dsf-fhir
 Hostname 49.12.77.194
 User ubuntu
