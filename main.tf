@@ -10,16 +10,30 @@ data "hcloud_ssh_key" "jgruendner" {
   name       = "Julian Gruendner"
 }
 
+data "hcloud_ssh_key" "rwettstein" {
+  name       = "Reto Wettstein"
+}
+
 module "diz" {
   source   = "./modules/diz"
   number   = count.index + 1
-  ssh_keys = [data.hcloud_ssh_key.akiel.id, data.hcloud_ssh_key.mruehle.id, data.hcloud_ssh_key.jgruendner.id]
+  ssh_keys = [
+    data.hcloud_ssh_key.akiel.id,
+    data.hcloud_ssh_key.mruehle.id,
+    data.hcloud_ssh_key.jgruendner.id,
+    data.hcloud_ssh_key.rwettstein.id
+  ]
   count    = terraform.workspace == "default" ? 2 : 0
 }
 
 module "fdpg" {
   source   = "./modules/fdpg"
-  ssh_keys = [data.hcloud_ssh_key.akiel.id, data.hcloud_ssh_key.mruehle.id, data.hcloud_ssh_key.jgruendner.id]
+  ssh_keys = [
+    data.hcloud_ssh_key.akiel.id,
+    data.hcloud_ssh_key.mruehle.id,
+    data.hcloud_ssh_key.jgruendner.id,
+    data.hcloud_ssh_key.rwettstein.id
+  ]
 }
 
 module "dms" {
