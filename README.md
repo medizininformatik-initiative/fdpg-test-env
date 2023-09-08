@@ -4,7 +4,17 @@ This project defines the FDPG+ test environment in the Hetzner Cloud. We use Ter
 
 ## Terraform
 
-We use Terraform v1.4.5.
+We use Terraform v1.4.5+.
+
+### Terraform State
+
+The Terraform state is shared using the WebDAV protocol. To be able to use the backend, which is necessary for all terraform commands interacting with the actual infrastructure, you need to set the following environment variables:
+
+* `TF_HTTP_ADDRES` - the WebDAV service endpoint including the path to the terraform state file (e.q. `https://webdav.example.com/terraform/terraform.tfstate`)
+* `TF_HTTP_USERNAME` - the name of the WebDAV account
+* `TF_HTTP_PASSWORD` - the password of the WebDAV account
+
+These credentials are stored on the StorageBox under the paths `secrets/webdav/address`, `secrets/webdav/username` and `secrets/webdav/password`.
 
 ### Init Terraform
 
@@ -12,9 +22,6 @@ We use Terraform v1.4.5.
 terraform init
 ```
 
-### Terraform State
-
-Currently, the Terraform state is not shared. So only Alex can use Terraform right now.
 
 ### Choose Terraform Workspace
 

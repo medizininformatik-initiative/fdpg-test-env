@@ -1,0 +1,10 @@
+{
+  "terraform": {
+    "backend": {
+      "http": {
+        "address": "https://u359202-sub1.your-storagebox.de/terraform/terraform.tfstate",
+        "update_method": "PUT"
+      }
+    }
+  }
+}
