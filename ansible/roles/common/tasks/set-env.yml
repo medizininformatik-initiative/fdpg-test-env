@@ -1,0 +1,21 @@
+- name: Ensure file exists
+  file:
+    path: "{{ path }}"
+    owner: "{{ deploy_user }}"
+    group: "{{ deploy_user }}"
+    mode: u=rw,g=r,o=r
+    state: touch
+  changed_when: false
+
+- name: Replace environment variables
+  lineinfile:
+    path: "{{ path }}"
+    regexp: "^#?{{ item.name }}=\"?(?!{{ item.value | regex_escape() }})\"?"
+    line: "{{ item.name }}=\"{{ item.value }}\""
+  loop: "{{ variables | default([]) }}"
+
+- name: Add missing environment variables
+  lineinfile:
+    path: "{{ path }}"
+    line: "{{ item.name }}=\"{{ item.value }}\""
+  loop: "{{ variables | default([]) }}"

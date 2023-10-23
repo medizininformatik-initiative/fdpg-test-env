@@ -1,0 +1,43 @@
+- name: Flare - Get environment config stats
+  stat:
+    path: "{{ flare_path }}/.env"
+  register: flare_env
+
+- name: Flare - Get Keycloak default environment config stats
+  stat:
+    path: "{{ flare_path }}/.env.default"
+  register: flare_env_default
+
+- name: Flare - Copy Keycloak default environment config
+  copy:
+    src: "{{ flare_path }}/.env.default"
+    dest: "{{ flare_path }}/.env"
+    owner: ubuntu
+    group: ubuntu
+    mode: u+rw,g-wx,o-rwx
+    remote_src: true
+  when: flare_env.stat.exists == false or flare_env.stat.ctime < flare_env_default.stat.ctime
+
+- name: Flare - Setup evnironment variables
+  include_role:
+    name: common
+    tasks_from: set-env
+  vars:
+    path: "{{ flare_path }}/.env"
+    variables:
+    - name: FLARE_LOG_LEVEL
+      value: "{{ 'debug' if enable_debug is defined and enable_debug == 'true' else 'info' }}"
+
+- name: Flare - IMPLEMENT ONTOLOGY MAPPING DOWNLOAD
+  debug:
+    msg: ontology mappings need manual upload -> fix when available at GitHub
+
+- name: Flare - Start container
+  community.docker.docker_compose:
+    project_src: "{{ flare_path }}"
+    project_name: "{{ project_name }}"
+    files:
+    - docker-compose.yml
+  environment:
+    COMPOSE_IGNORE_ORPHANS: "1"
+

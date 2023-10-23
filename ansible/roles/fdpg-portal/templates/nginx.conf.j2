@@ -1,0 +1,117 @@
+pid /tmp/nginx.pid;
+
+events {
+    worker_connections  1024;
+  }
+
+http {
+
+    include    /etc/nginx/conf.d/mime.types;
+    gzip on;
+    gzip_vary on;
+    gzip_min_length 10240;
+    gzip_proxied expired no-cache no-store private auth;
+    gzip_types text/plain text/css text/xml text/javascript application/x-javascript application/xml;
+    gzip_disable "MSIE [1-6]\.";
+    # SSL-Certificate and private key
+    ssl_certificate /etc/nginx/conf.d/cert.pem;
+    ssl_certificate_key /etc/nginx/conf.d/key.pem;
+    ssl_trusted_certificate /etc/nginx/conf.d/ca.pem;
+
+    # The supported SSL Protocols
+    ssl_protocols   TLSv1.2 TLSv1.3;
+
+    # NGINX can impose its TLS cipher suite choices over those of a connecting browser, provided the browser supports them.
+    ssl_prefer_server_ciphers      on;
+
+    # The supported SSL Ciphers
+    ssl_ciphers                    'ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-AES256-SHA384:ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES128-SHA256:ECDHE-ECDSA-RC4-SHA:ECDHE-RSA-RC4-SHA:ECDH-ECDSA-RC4-SHA:ECDH-RSA-RC4-SHA:RC4-SHA';
+
+    # Path to the Diffie-Hellman Prime - # to create: openssl dhparam -out /etc/nginx/dhparam.pem 4096
+    # ssl_dhparam                    /etc/nginx/dhparam.pem;
+
+    ssl_session_cache  builtin:1000  shared:SSL:10m;
+
+    # OCSP Stapling
+    # When enabled, NGINX will make OCSP requests on behalf of connecting browsers. The response received from the OCSP server is added to NGINX’s browser response, which eliminates the need for browsers to verify a certificate’s revocation status by connecting directly to an OCSP server.
+    ssl_stapling                  on;
+    ssl_stapling_verify           on;
+
+    # Header Options
+    add_header                    Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+    add_header                    X-Content-Type-Options nosniff;
+    add_header                    X-Frame-Options SAMEORIGIN;
+
+    server {
+
+        listen       8443 ssl;
+        server_name {{ fdpg_portal_domain }};
+
+
+        #error_page  404              /404.html;
+
+        # redirect server error pages to the static page /50x.html
+        #
+        error_page   500 502 503 504  /50x.html;
+        location = /50x.html {
+            root   /usr/share/nginx/html;
+        }
+
+        root /usr/share/nginx/html;
+        index index.html;
+        location / {
+            # add_header X-Frame-Options "ALLOW-FROM {{ fdpg_auth_domain }}";
+            # add_header Content-Security-Policy "frame-ancestors {{ fdpg_portal_domain }} {{ fdpg_auth_domain }}";
+            try_files $uri $uri/ /index.html;
+        }
+
+        location /api/ {
+            proxy_pass http://feasibility-gui-backend:8090/api/;
+            proxy_set_header X-Forwarded-Proto $scheme;
+            proxy_set_header X-Forwarded-Host  $host;
+        }
+    }
+
+    server {
+
+        listen       8443 ssl;
+        listen       [::]:8443 ssl http2;
+        server_name  {{ fdpg_portal_aktin_domain }};
+
+        location / {
+            proxy_pass          http://aktin-broker:8080/;
+            proxy_set_header    X-Forwarded-For   $proxy_add_x_forwarded_for;
+            proxy_set_header    X-Forwarded-Proto $scheme;
+            proxy_set_header    Host $host;
+            proxy_http_version  1.1;
+            proxy_set_header    Upgrade $http_upgrade;
+            proxy_set_header    Connection "upgrade";
+            proxy_read_timeout  86400;
+        }
+
+        location /admin/ {
+          deny all;
+          return 404;
+        }
+    }
+
+    server {
+        listen       8443 ssl http2;
+        listen       [::]:8443 ssl http2;
+        server_name  {{ fdpg_portal_dsf_domain }};
+
+        ssl_client_certificate /etc/nginx/conf.d/ca.pem;
+        ssl_verify_client optional;
+        ssl_verify_depth 5;
+
+        location / {
+            proxy_set_header     X-ClientCert $ssl_client_escaped_cert;
+            client_max_body_size 10M;
+            proxy_pass           http://dsf-zars-fhir-app:8080;
+            proxy_http_version   1.1;
+            proxy_set_header     Upgrade $http_upgrade;
+            proxy_set_header     Connection "upgrade";
+            proxy_read_timeout   43200s;
+        }
+    }
+}

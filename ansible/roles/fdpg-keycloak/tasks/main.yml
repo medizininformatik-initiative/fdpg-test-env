@@ -1,2 +1,153 @@
 ---
 # tasks file for fdpg-keycloak
+- name: Checkout FDPG Deployment
+  include_role:
+    name: common
+    tasks_from: checkout-deploy-repo
+  vars:
+    feasibility_deploy_version: readd-dsf
+
+- name: Get Certifcate and Private key
+  include_role:
+    name: common
+    tasks_from: get-storage-file
+  vars:
+    storage_file_path: "{{ item.src }}"
+    host_file_path: "{{ item.dest }}"
+  loop:
+  - src:  "secrets/domain/test.ffg.de.cer"
+    dest: "{{ secrets_path }}/fdpg.test.ffg.de.cer"
+  - src:  "secrets/domain/test.ffg.de.key"
+    dest: "{{ secrets_path }}/fdpg.test.ffg.de.key"
+  - src:  "secrets/keycloak/keycloak-db.password"
+    dest: "{{ secrets_path }}/keycloak-db.password"
+  - src:  "secrets/keycloak/keycloak-admin.password"
+    dest: "{{ secrets_path }}/keycloak-admin.password"
+  - src:  "secrets/keycloak/keycloak-user-test.password"
+    dest: "{{ secrets_path }}/keycloak-user-test.password"
+
+- name: Get Keycloak environment config stats
+  stat:
+    path: "{{ deploy_path }}/feasibility-portal/keycloak/.env"
+  register: keycloak_env
+
+- name: Get Keycloak default environment config stats
+  stat:
+    path: "{{ deploy_path }}/feasibility-portal/keycloak/.env.default"
+  register: keycloak_env_default
+
+- name: Copy Keycloak default environment config
+  copy:
+    src: "{{ deploy_path }}/feasibility-portal/keycloak/.env.default"
+    dest: "{{ deploy_path }}/feasibility-portal/keycloak/.env"
+    owner: ubuntu
+    group: ubuntu
+    mode: u+rw,g-wx,o-rwx
+    remote_src: true
+  when: keycloak_env.stat.exists == false or keycloak_env.stat.ctime < keycloak_env_default.stat.ctime
+
+- name: Keycloak - Read database password
+  slurp:
+    src: "{{ secrets_path }}/keycloak-db.password"
+  register: keycloak_db_pw
+  changed_when: false
+
+- name: Keycloak - Read admin password
+  slurp:
+    src: "{{ secrets_path }}/keycloak-admin.password"
+  register: keycloak_admin_pw
+  changed_when: false
+
+- name: Keycloak - Read user "test" password
+  slurp:
+    src: "{{ secrets_path }}/keycloak-user-test.password"
+  register: keycloak_user_test_pw
+  changed_when: false
+
+- name: Setup Keycloak
+  lineinfile:
+    path: "{{ deploy_path }}/feasibility-portal/keycloak/.env"
+    regexp: "{{ item.regexp }}"
+    line: "{{ item.line }}"
+  loop:
+  - regexp: '^FEASIBILITY_KC_DB_PW='
+    line:    "FEASIBILITY_KC_DB_PW={{ keycloak_db_pw }}"
+  - regexp: '^FEASIBILITY_KC_ADMIN_PW='
+    line:    "FEASIBILITY_KC_ADMIN_PW={{ keycloak_admin_pw }}"
+  - regexp: '^FEASIBILITY_KC_HTTP_RELATIVE_PATH='
+    line:    "FEASIBILITY_KC_HTTP_RELATIVE_PATH=/"
+  - regexp: '^FEASIBILITY_KC_HOSTNAME_URL='
+    line:    'FEASIBILITY_KC_HOSTNAME_URL=https://{{ fdpg_auth_domain }}'
+  - regexp: '^FEASIBILITY_KC_HOSTNAME_ADMIN_URL='
+    line:    'FEASIBILITY_KC_HOSTNAME_ADMIN_URL=https://{{ fdpg_auth_domain }}'
+
+- name: Set base url in init config
+  replace:
+    path: "{{ deploy_path }}/feasibility-portal/keycloak/init/feasibility-realm.json"
+    regexp: 'https://localhost'
+    replace: "https://{{ fdpg_portal_domain }}"
+
+- name: Start Keycloak Service
+  community.docker.docker_compose:
+    project_src: "{{ deploy_path }}/feasibility-portal/keycloak"
+    files:
+    - docker-compose.yml
+  register: keycloak_docker
+
+- name: Get keycloak network name
+  set_fact:
+    keycloak_network: "{{ keycloak_docker.services.auth[(keycloak_docker.services.auth.keys() | first)].networks.keys() | first }}"
+
+- name: Copy NGINX configuration
+  template:
+    src: nginx.conf.j2
+    dest: /home/ubuntu/deploy/nginx.conf
+    owner: ubuntu
+    group: ubuntu
+    mode: u=rw,g=r,o=r
+
+- name: ReStart NGINX
+  docker_compose:
+    project_name: proxy
+    definition:
+      version: '3'
+      services:
+        nginx:
+          image: 'nginx:1.25.1'
+          networks:
+          - keycloak_network
+          ports:
+          - "443:8443"
+          volumes:
+          - "{{ secrets_path }}/fdpg.test.ffg.de.cer:/etc/nginx/cert.pem:ro"
+          - "{{ secrets_path }}/fdpg.test.ffg.de.key:/etc/nginx/pkey.pem:ro"
+          - "{{ secrets_path }}/trusted_ca.pem:/etc/nginx/trusted.pem:ro"
+          - /home/ubuntu/deploy/nginx.conf:/etc/nginx/nginx.conf:ro
+      networks:
+        keycloak_network:
+          name: "{{ keycloak_network }}"
+          external: true
+    restarted: true
+
+- name: Wait for Keycloak
+  uri:
+    url: "https://{{ fdpg_auth_domain }}"
+    follow_redirects: none
+    method: GET
+    validate_certs: false
+  register: _result
+  until: _result.status == 200
+  retries: 12 # 12 * 5s = 60s
+  delay: 5 # Every 5 seconds
+
+- name: Create Test User
+  include_tasks: create-user.yml
+  vars:
+    username: "test"
+    first_name: "User"
+    last_name: "Test"
+    email: "foo@bar.baz"
+    password: "{{ keycloak_user_test_pw }}"
+    roles:
+    - name: "FeasibilityUser"
+      id: "51cb7b69-d269-4872-b832-2d326e2e8658"

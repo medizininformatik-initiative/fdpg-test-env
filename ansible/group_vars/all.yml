@@ -1,8 +1,17 @@
 ---
 # variables for all hosts
-deploy_path: /home/ubuntu/deploy
+deploy_user: ubuntu
+deploy_path: "/home/{{ deploy_user }}/deploy"
+deploy_version: "readd_dsf"
+secrets_path: "{{ deploy_path }}/secrets"
 fdpg_portal_domain: fdpg.test.forschen-fuer-gesundheit.de
 fdpg_portal_aktin_domain: aktin.fdpg.test.forschen-fuer-gesundheit.de
 fdpg_portal_dsf_domain: dsf.fdpg.test.forschen-fuer-gesundheit.de
 fdpg_auth_domain: auth.fdpg.test.forschen-fuer-gesundheit.de
-diz_1_dsf_domain: dsf.diz1.test.forschen-fuer-gesundheit.de
+diz_1_dsf_domain: dsf.diz-1.test.forschen-fuer-gesundheit.de
+diz_2_dsf_domain: dsf.diz-2.test.forschen-fuer-gesundheit.de
+storage_host: u359202.your-storagebox.de
+storage_user: u359202-sub1
+dsf_process_ping_pong_version: "1.0.1.0"
+dsf_process_feasibility_version: "1.0.0.0"
+dsf_process_report_version: "1.0.0.0-RC3"

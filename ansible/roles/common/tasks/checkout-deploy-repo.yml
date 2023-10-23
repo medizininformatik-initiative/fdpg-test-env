@@ -1,0 +1,30 @@
+---
+
+- name: Check if deployment is checked out
+  stat:
+    path: "{{ deploy_path }}"
+  become: true
+  become_user: ubuntu
+  register: deploy_dir
+
+- name: Check for updates
+  shell:
+    chdir: "{{ deploy_path }}"
+    cmd: |
+      git fetch
+      git status | grep "Your branch is up to date with 'origin/{{ feasibility_deploy_version }}'"
+  become: true
+  become_user: ubuntu
+  register: git_status
+  ignore_errors: true
+  when: deploy_dir.stat.isdir is defined and deploy_dir.stat.isdir
+
+- name: Checkout deployment project
+  git:
+    repo: 'https://github.com/medizininformatik-initiative/feasibility-deploy.git'
+    dest: "{{ deploy_path }}"
+    version: "{{ feasibility_deploy_version }}"
+    force: true
+  become: true
+  become_user: ubuntu
+  when: deploy_dir.stat.isdir is not defined or deploy_dir.stat.isdir == false or git_status.failed

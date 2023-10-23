@@ -1,1 +1,49 @@
 ---
+- name: DSF BPE - Checkout FDPG Deployment
+  include_role:
+    name: common
+    tasks_from: checkout-deploy-repo
+  vars:
+    feasibility_deploy_version: readd-dsf
+
+- name: DSF BPE - Extract DIZ instance from hostname
+  set_fact:
+    diz_instance: "{{ inventory_hostname | regex_replace('^diz-(\\d+)-(.*)$', '\\1') }}"
+  failed_when: inventory_hostname is not regex('^diz-\d+-')
+
+- name: DSF BPE - Get environment config stats
+  stat:
+    path: "{{ deploy_path }}/feasibility-triangle/dsf-client/.env"
+  register: dsf_fhir_env
+
+- name: DSF BPE - Get default environment config stats
+  stat:
+    path: "{{ deploy_path }}/feasibility-triangle/dsf-client/.env.default"
+  register: dsf_fhir_env_default
+
+- name: DSF BPE - Copy default environment config
+  copy:
+    src: "{{ deploy_path }}/feasibility-triangle/dsf-client/.env.default"
+    dest: "{{ deploy_path }}/feasibility-triangle/dsf-client/.env"
+    owner: ubuntu
+    group: ubuntu
+    mode: u+rw,g-wx,o-rwx
+    remote_src: true
+  when: dsf_fhir_env.stat.exists == false or dsf_fhir_env.stat.ctime < dsf_fhir_env_default.stat.ctime
+
+- name: DSF BPE - Configure BPE app
+  include_tasks: bpe-app.yml
+  vars:
+    instance: "{{ diz_instance }}"
+    dsf_bpe_path: "{{ deploy_path }}/feasibility-triangle/dsf-client"
+    evaluation_strategy: "cql"
+
+- name: DSF BPE - Start container
+  community.docker.docker_compose:
+    project_src: "{{ deploy_path }}/feasibility-triangle/dsf-client"
+    project_name: "feasibility"
+    files:
+    - docker-compose.yml
+    services:
+    - dsf-dic-bpe-db
+    - dsf-dic-bpe-app

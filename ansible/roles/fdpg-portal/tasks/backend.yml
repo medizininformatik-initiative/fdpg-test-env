@@ -1,0 +1,85 @@
+---
+- name: Backend - Copy environment files
+  copy:
+    src: "{{ backend_path }}/.env.default"
+    dest: "{{ backend_path }}/.env"
+    remote_src: true
+
+- name: Backend - Upload secrets
+  include_role:
+    name: common
+    tasks_from: get-storage-file
+  vars:
+    storage_file_path: "{{ item.src }}"
+    host_file_path: "{{ item.dest }}"
+  loop:
+  - src:  "secrets/aktin/backend-api.key"
+    dest: "{{ secrets_path }}/aktin-backend-api.key"
+  - src:  "secrets/dsf/fdpg/bpe.fdpg.test.ffg.de.p12"
+    dest: "{{ secrets_path }}/backend.fdpg.test.ffg.de.p12"
+  - src:  "secrets/domain/trusted_cas.pem"
+    dest: "{{ secrets_path }}/trusted_cas.pem"
+  - src:  "secrets/dsf/fdpg/backend-truststore.p12"
+    dest: "{{ secrets_path }}/backend-truststore.p12"
+
+- name: Backend - Read admin password
+  slurp:
+    src: "{{ secrets_path }}/aktin-backend-api.key"
+  register: api_key
+  changed_when: false
+
+- name: Backend - Setup evnironment variables
+  include_role:
+    name: common
+    tasks_from: set-env
+  vars:
+    path: "{{ backend_path }}/.env"
+    variables:
+    - name: FEASIBILITY_BACKEND_API_BASE_URL
+      value:   "https://{{ fdpg_portal_domain }}/api/"
+    - name: FEASIBILITY_BACKEND_ALLOWED_ORIGINS
+      value:   "https://{{ fdpg_portal_domain }}"
+    - name: FEASIBILITY_BACKEND_BROKER_CLIENT_DIRECT_ENABLED
+      value:   "false"
+    - name: FEASIBILITY_BACKEND_AKTIN_ENABLED
+      value:   "true"
+    - name: FEASIBILITY_BACKEND_DSF_ENABLED
+      value:   "true"
+    - name: FEASIBILITY_BACKEND_AKTIN_BROKER_API_KEY
+      value:   "{{ api_key.content | b64decode | trim }}"
+    - name: FEASIBILITY_BACKEND_DSF_CACERT
+      value:   "{{ deploy_path }}/secrets/trusted_cas.pem"
+    - name: FEASIBILITY_BACKEND_DSF_DSF_SECURITY_KEYSTORE_P12FILE
+      value:   "{{ deploy_path }}/secrets/backend.fdpg.test.ffg.de.p12"
+    - name: FEASIBILITY_BACKEND_DSF_ORGANIZATION_ID
+      value:   "forschen-fuer-gesundheit.de"
+    - name: FEASIBILITY_BACKEND_DSF_WEBSERVICE_BASE_URL
+      value:   "https://{{ fdpg_portal_dsf_domain }}/fhir"
+    - name: FEASIBILITY_BACKEND_DSF_WEBSOCKET_URL
+      value:   "wss://{{ fdpg_portal_dsf_domain }}:443/fhir/ws"
+    - name: FEASIBILITY_BACKEND_KEYCLOAK_BASE_URL_ISSUER
+      value:   "https://{{ fdpg_auth_domain }}"
+    - name: FEASIBILITY_BACKEND_KEYCLOAK_BASE_URL_JWK
+      value:   "https://{{ fdpg_auth_domain }}"
+
+- name: Backend - Add custom java trust-store as workaround
+  lineinfile:
+    path: "{{ backend_path }}/docker-compose.yml"
+    insertafter: "{{ item.insertafter }}"
+    line: "{{ item.line }}"
+  loop:
+  - insertafter: '^      LOG_LEVEL:'
+    line:  '      JDK_JAVA_OPTIONS: "-Djavax.net.ssl.trustStore=/run/secrets/backend-truststore.p12 -Djavax.net.ssl.trustStorePassword=password"'
+  - insertafter: '^    secrets:'
+    line:  '    - backend-truststore.p12'
+  - insertafter: '^secrets:'
+    line:  '  backend-truststore.p12: { file: "/home/ubuntu/deploy/secrets/backend-truststore.p12" }'
+
+- name: Backend - Start containers
+  community.docker.docker_compose:
+    project_src: "{{ backend_path }}"
+    project_name: "{{ project_name }}"
+    files:
+    - docker-compose.yml
+  environment:
+    COMPOSE_IGNORE_ORPHANS: "1"

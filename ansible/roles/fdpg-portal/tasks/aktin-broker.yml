@@ -1,0 +1,39 @@
+---
+- name: Upload aktin API key file
+  include_role:
+    name: common
+    tasks_from: get-storage-file
+  vars:
+    storage_file_path: "{{ item.src }}"
+    host_file_path: "{{ item.dest }}"
+  loop:
+  - src:  "secrets/aktin/api-keys.properties"
+    dest: "{{ aktin_broker_path }}/api-keys.properties"
+  - src:  "secrets/aktin/admin.password"
+    dest: "{{ secrets_path }}/aktin-admin.password"
+
+- name: Copy aktin environment files
+  copy:
+    src: "{{ aktin_broker_path }}/.env.default"
+    dest: "{{ aktin_broker_path }}/.env"
+    remote_src: true
+
+- name: Read aktin admin password
+  slurp:
+    src: "{{ secrets_path }}/aktin-admin.password"
+  register: admin_pw
+
+- name: Replace default aktin admin password
+  replace:
+    path: "{{ aktin_broker_path }}/.env"
+    regexp: "AKTIN_ADMIN_PW=changeme"
+    replace: "AKTIN_ADMIN_PW={{ admin_pw.content | b64decode }}"
+
+- name: Start aktin broker
+  community.docker.docker_compose:
+    project_src: "{{ aktin_broker_path }}"
+    project_name: "{{ project_name }}"
+    files:
+    - docker-compose.yml
+  environment:
+    COMPOSE_IGNORE_ORPHANS: "True"
