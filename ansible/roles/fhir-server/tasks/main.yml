@@ -70,3 +70,61 @@
       networks:
         mii_fhir_network:
   register: fhir_server_status
+
+- name: Wait until blaze server is up before continuing
+  ansible.builtin.wait_for:
+    host: "{{ mii_fhir_domain }}"
+    port: "443"
+    timeout: 60
+
+- name: Check if test data is already loaded
+  uri:
+    url: "https://{{ mii_fhir_domain }}/fhir/Patient"
+    method: GET
+    return_content: true
+    body_format: json
+  register: patient_stats
+
+- name: Create test data directory
+  file:
+    path: "{{ deploy_path }}/testdata"
+    state: directory
+  when: patient_stats.json.total == 0
+
+- name: Download and extract test data
+  unarchive:
+    src: https://health-atlas.de/data_files/594/download?version=1
+    dest: "{{ deploy_path }}/testdata"
+    remote_src: yes
+  when: patient_stats.json.total == 0
+
+- name: Find compressed bundles
+  find:
+    paths: "{{ deploy_path }}/testdata"
+    patterns: "*.json.zip"
+    recurse: true
+  register: compressed_bundles
+  when: patient_stats.json.total == 0
+
+- name: Decompress bundles
+  unarchive:
+    src: "{{ item.path }}"
+    dest: "{{ deploy_path }}/testdata"
+    remote_src: yes
+  loop: "{{ compressed_bundles.files | flatten(levels=1) }}"
+  when: patient_stats.json.total == 0
+
+- name: Get blaze container IP
+  set_fact:
+    blaze_ip: "{{ fhir_server_status.services.blaze['mii-fhir_blaze_1'].networks['mii-fhir_mii_fhir_network'].IPAddress }}"
+  when: patient_stats.json.total == 0
+
+- name: Upload test data
+  shell:
+    cmd: "for f in $(find {{ deploy_path }}/testdata -name '*.json'); do curl -Lsf -X POST -H 'Content-Type: application/json' -d @\"$f\" http://{{ blaze_ip }}:8080/fhir; done"
+  when: patient_stats.json.total == 0
+
+- name: Remove test data directory
+  file:
+    path: "{{ deploy_path }}/testdata"
+    state: absent
