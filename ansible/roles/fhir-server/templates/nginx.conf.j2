@@ -1,0 +1,56 @@
+pid /tmp/nginx.pid;
+
+events {}
+
+http {
+
+    client_body_temp_path /tmp/client_temp;
+    proxy_temp_path       /tmp/proxy_temp_path;
+    fastcgi_temp_path     /tmp/fastcgi_temp;
+    uwsgi_temp_path       /tmp/uwsgi_temp;
+    scgi_temp_path        /tmp/scgi_temp;
+
+    # SSL-Certificate and private key
+    ssl_certificate            /etc/nginx/cert.pem;
+    ssl_certificate_key        /etc/nginx/pkey.pem;
+    include                    /etc/nginx/options-ssl-nginx.conf;
+
+    limit_req_zone $binary_remote_addr zone=perip:10m rate=1r/s;
+    limit_req_zone $server_name zone=perserver:10m rate=1000r/s;
+    limit_req zone=perip burst=100 nodelay;
+    limit_req zone=perserver burst=500;
+    limit_req_status 429;
+
+    server {
+        listen       8443 ssl;
+        server_name  {{ mii_fhir_domain }};
+
+        proxy_set_header           Host $host;
+        proxy_set_header           X-Real-IP $remote_addr;
+        proxy_set_header           X-Forwarded-For $host;
+        proxy_set_header           X-Forwarded-Proto $scheme;
+        proxy_set_header           X-Forwarded-Host  $http_host;
+        proxy_set_header           X-Forwarded-Port $server_port;
+
+        proxy_read_timeout         90;
+        proxy_busy_buffers_size    512k;
+        proxy_buffers              4 512k;
+        proxy_buffer_size          256k;
+
+        location / {
+          proxy_pass               http://blaze:8080/;
+
+          limit_except GET {
+            deny all;
+          }
+
+          location ~ ^/(.+/_search)$ {
+            proxy_pass             http://blaze:8080/$1;
+
+            limit_except GET POST {
+              deny all;
+            }
+          }
+        }
+    }
+}

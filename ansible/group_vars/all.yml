@@ -10,6 +10,7 @@ fdpg_portal_dsf_domain: dsf.fdpg.test.forschen-fuer-gesundheit.de
 fdpg_auth_domain: auth.fdpg.test.forschen-fuer-gesundheit.de
 diz_1_dsf_domain: dsf.diz-1.test.forschen-fuer-gesundheit.de
 diz_2_dsf_domain: dsf.diz-2.test.forschen-fuer-gesundheit.de
+mii_fhir_domain: fhir.test.forschen-fuer-gesundheit.de
 storage_host: u359202.your-storagebox.de
 storage_user: u359202-sub1
 dsf_process_ping_pong_version: "1.0.1.0"
