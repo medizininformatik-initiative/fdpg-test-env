@@ -1,0 +1,30 @@
+---
+- name: DSF BPE - Build plugin search patterns
+  set_fact:
+    plugin_patterns: "{{ plugin_patterns | default([]) + [ item.file.basename ~ '(-.*)?\\.' ~ item.file.extension ] }}"
+    plugin_excludes: "{{ plugin_excludes | default([]) + [ item.file.basename ~ '-' ~ item.version ~ '.' ~ item.file.extension ] }}"
+  loop: "{{ process_plugins }}"
+
+- name: DSF BPE - Find other plugin versions
+  find:
+    paths: "{{ process_plugin_folder_path }}"
+    file_type: file
+    use_regex: yes
+    patterns: "{{ plugin_patterns | default([]) }}"
+    excludes: "{{ plugin_excludes | default([]) }}"
+  register: other_plugin_versions
+
+- name: DSF BPE - Delete other plugin versions
+  file:
+    path: "{{ item.path }}"
+    state: absent
+  loop: "{{ other_plugin_versions.files }}"
+
+- name: DSF BPE - Download process plugins
+  get_url:
+    url: "{{ item.url }}/releases/download/v{{ item.version }}/{{ item.file.basename }}-{{ item.version }}.{{ item.file.extension }}"
+    dest: "{{ process_plugin_folder_path }}/{{ item.file.basename }}-{{ item.version }}.{{ item.file.extension }}"
+    owner: "{{ deploy_user }}"
+    group: "{{ deploy_user }}"
+    mode: "444"
+  loop: "{{ process_plugins | default([]) }}"
