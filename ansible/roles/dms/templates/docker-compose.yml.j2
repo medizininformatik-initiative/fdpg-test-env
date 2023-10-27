@@ -1,0 +1,254 @@
+version: "3.8"
+
+services:
+  kds-store:
+    image:  ghcr.io/samply/blaze:0.22.3
+    healthcheck:
+      test: [ "CMD", "curl", "http://localhost:8080/health" ]
+      interval: 10s
+      timeout: 15s
+      retries: 5
+    environment:
+      BASE_URL: http://kds-store:8080
+      LOG_LEVEL: info
+    networks:
+      dms:
+        aliases:
+        - "kds-store"
+
+  dsf-fhir-db:
+    image: postgres:15-alpine
+    restart: on-failure
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres -d postgres" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    environment:
+      TZ: Europe/Berlin
+      POSTGRES_PASSWORD_FILE: /run/secrets/db_liquibase.password
+      POSTGRES_USER: liquibase_user
+      POSTGRES_DB: fhir
+    networks:
+      fhir:
+        aliases:
+        - "db"
+    secrets:
+    - db_liquibase.password
+    volumes:
+    - type: volume
+      source: fhir-db-data
+      target: /var/lib/postgresql/data
+
+  dsf-fhir:
+    image: ghcr.io/datasharingframework/fhir:1.3.0
+    restart: on-failure
+    healthcheck:
+      test: [ "CMD-SHELL", "./healthcheck.sh" ]
+      interval: 10s
+      timeout: 15s
+      retries: 5
+    secrets:
+    - db_liquibase.password
+    - db_fhir_user.password
+    - db_fhir_user_permanent_delete.password
+    - client_trust_certificates.pem
+    - client_certificate.pem
+    - client_certificate_private_key.pem
+    volumes:
+    - type: bind
+      source: "{{ fhir_log_path }}"
+      target: /opt/fhir/log
+    environment:
+      TZ: Europe/Berlin
+      DEV_DSF_SERVER_AUTH_TRUST_CLIENT_CERTIFICATE_CAS: /run/secrets/client_trust_certificates.pem
+      DEV_DSF_FHIR_DB_LIQUIBASE_PASSWORD_FILE: /run/secrets/db_liquibase.password
+      DEV_DSF_FHIR_DB_USER_PASSWORD_FILE: /run/secrets/db_fhir_user.password
+      DEV_DSF_FHIR_DB_USER_PERMANENT_DELETE_PASSWORD_FILE: /run/secrets/db_fhir_user_permanent_delete.password
+      DEV_DSF_FHIR_CLIENT_TRUST_SERVER_CERTIFICATE_CAS: /run/secrets/client_trust_certificates.pem
+      DEV_DSF_FHIR_CLIENT_CERTIFICATE: /run/secrets/client_certificate.pem
+      DEV_DSF_FHIR_CLIENT_CERTIFICATE_PRIVATE_KEY: /run/secrets/client_certificate_private_key.pem
+      DEV_DSF_FHIR_DB_URL: jdbc:postgresql://db/fhir
+      DEV_DSF_FHIR_DB_USER_GROUP: fhir_users
+      DEV_DSF_FHIR_DB_USER_USERNAME: fhir_server_user
+      DEV_DSF_FHIR_DB_USER_PERMANENT_DELETE_GROUP: fhir_permanent_delete_users
+      DEV_DSF_FHIR_DB_USER_PERMANENT_DELETE_USERNAME: fhir_server_permanent_delete_user
+      DEV_DSF_FHIR_SERVER_BASE_URL: "https://{{ dsf_fhir_domain }}/fhir"
+      DEV_DSF_FHIR_SERVER_ORGANIZATION_IDENTIFIER_VALUE: "{{ organization_identifier }}"
+      DEV_DSF_FHIR_SERVER_ORGANIZATION_THUMBPRINT: "{{ organization_thumbprint }}"
+      DEV_DSF_FHIR_SERVER_ROLECONFIG: |
+        - remote_user:
+            thumbprint: {{ remote_user_thumbprint }}
+            token-role: admin
+            dsf-role:
+              - CREATE
+              - READ
+              - UPDATE
+              - DELETE
+              - SEARCH
+              - HISTORY
+              - PERMANENT_DELETE
+    networks:
+      dms:
+        aliases:
+        - "dsf-fhir"
+      fhir:
+    depends_on:
+      dsf-fhir-db:
+        condition: service_healthy
+
+  dsf-bpe-db:
+    image: postgres:15-alpine
+    restart: on-failure
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres -d postgres" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    environment:
+      TZ: Europe/Berlin
+      POSTGRES_PASSWORD_FILE: /run/secrets/db_liquibase.password
+      POSTGRES_USER: liquibase_user
+      POSTGRES_DB: bpe
+    networks:
+      bpe:
+        aliases:
+        - "db"
+    secrets:
+    - db_liquibase.password
+    volumes:
+    - type: volume
+      source: bpe-db-data
+      target: /var/lib/postgresql/data
+
+  dsf-bpe:
+    image: ghcr.io/datasharingframework/bpe:1.3.0
+    restart: on-failure
+    healthcheck:
+      test: [ "CMD-SHELL", "./healthcheck.sh" ]
+      interval: 10s
+      timeout: 15s
+      retries: 5
+    secrets:
+    - db_liquibase.password
+    - db_bpe_user.password
+    - db_bpe_user_camunda.password
+    - client_trust_certificates.pem
+    - client_certificate.pem
+    - client_certificate_private_key.pem
+    - dms_public_key.pem
+    - dms_private_key.pem
+    volumes:
+    - type: bind
+      source: "{{ bpe_process_path }}"
+      target: /opt/bpe/process
+      read_only: true
+    - type: bind
+      source: "{{ bpe_log_path }}"
+      target: /opt/bpe/log
+    - type: bind
+      source: "{{ bpe_cache_path }}"
+      target: /opt/bpe/cache
+    environment:
+      TZ: Europe/Berlin
+      DEV_DSF_SERVER_AUTH_TRUST_CLIENT_CERTIFICATE_CAS: /run/secrets/client_trust_certificates.pem
+      DEV_DSF_BPE_DB_LIQUIBASE_PASSWORD_FILE: /run/secrets/db_liquibase.password
+      DEV_DSF_BPE_DB_USER_PASSWORD_FILE: /run/secrets/db_bpe_user.password
+      DEV_DSF_BPE_DB_USER_CAMUNDA_PASSWORD_FILE: /run/secrets/db_bpe_user_camunda.password
+      DEV_DSF_BPE_FHIR_CLIENT_TRUST_SERVER_CERTIFICATE_CAS: /run/secrets/client_trust_certificates.pem
+      DEV_DSF_BPE_FHIR_CLIENT_CERTIFICATE: /run/secrets/client_certificate.pem
+      DEV_DSF_BPE_FHIR_CLIENT_CERTIFICATE_PRIVATE_KEY: /run/secrets/client_certificate_private_key.pem
+      DEV_DSF_BPE_DB_URL: jdbc:postgresql://db/bpe
+      DEV_DSF_BPE_DB_USER_GROUP: bpe_users
+      DEV_DSF_BPE_DB_USER_USERNAME: bpe_server_user
+      DEV_DSF_BPE_DB_USER_CAMUNDA_GROUP: camunda_users
+      DEV_DSF_BPE_DB_USER_CAMUNDA_USERNAME: camunda_server_user
+      DEV_DSF_BPE_FHIR_SERVER_BASE_URL: "https://{{ dsf_fhir_domain }}/fhir"
+      DE_MEDIZININFORMATIK_INITIATIVE_DATA_TRANSFER_DMS_FHIR_SERVER_BASE_URL: http://kds-store:8080/fhir
+      DE_MEDIZININFORMATIK_INITIATIVE_DATA_SHARING_DMS_FHIR_SERVER_BASE_URL: http://kds-store:8080/fhir
+      DE_MEDIZININFORMATIK_INITIATIVE_DMS_PUBLIC_KEY: /run/secrets/dms_public_key.pem
+      DE_MEDIZININFORMATIK_INITIATIVE_DMS_PRIVATE_KEY: /run/secrets/dms_private_key.pem
+      DE_MEDIZININFORMATIK_INITIATIVE_KDS_FHIR_DATALOGGINGENABLED: "true"
+      DEV_DSF_BPE_PROCESS_EXCLUDED: |
+        medizininformatik-initiativede_coordinateDataSharing|{{ dsf_process_data_sharing_version | regex_replace('^(\d+\.\d+)\.\d+\.\d+.*$', '\1') }}
+        medizininformatik-initiativede_executeDataSharing|{{ dsf_process_data_sharing_version | regex_replace('^(\d+\.\d+)\.\d+\.\d+.*$', '\1') }}
+        medizininformatik-initiativede_dataSend|{{ dsf_process_data_transfer_version | regex_replace('^(\d+\.\d+)\.\d+\.\d+.*$', '\1') }}
+    networks:
+      dms:
+      bpe:
+    depends_on:
+      dsf-bpe-db:
+        condition: service_healthy
+      dsf-fhir:
+        condition: service_healthy
+      kds-store:
+        condition: service_healthy
+
+  proxy:
+    image: nginx:1.25.2
+    restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "curl -ks https://localhost || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    ports:
+    - "443:8443"
+    secrets:
+    - proxy_certificate_and_int_cas.pem
+    - proxy_certificate_private_key.pem
+    - proxy_trusted_client_cas.pem
+    volumes:
+    - type: bind
+      source: "{{ nginx_conf_path }}"
+      target: "/etc/nginx/nginx.conf"
+      read_only: true
+    networks:
+      dms:
+    environment:
+      TZ: Europe/Berlin
+    depends_on:
+      dsf-fhir:
+        condition: service_healthy
+
+networks:
+  dms:
+  bpe:
+  fhir:
+
+secrets:
+  proxy_certificate_and_int_cas.pem:
+    file: "{{ proxy_certificate_and_int_cas_path }}"
+  proxy_certificate_private_key.pem:
+    file: "{{ proxy_certificate_private_key_path }}"
+  proxy_trusted_client_cas.pem:
+    file: "{{ proxy_trusted_client_cas_path }}"
+
+  client_trust_certificates.pem:
+    file: "{{ client_trust_certificates_path }}"
+  client_certificate.pem:
+    file: "{{ client_certificate_path }}"
+  client_certificate_private_key.pem:
+    file: "{{ client_certificate_private_key_path }}"
+
+  db_liquibase.password:
+    file: "{{ db_liquibase_password_path }}"
+  db_bpe_user.password:
+    file: "{{ db_bpe_user_password_path }}"
+  db_bpe_user_camunda.password:
+    file: "{{ db_bpe_user_camunda_password_path }}"
+  db_fhir_user.password:
+    file: "{{ db_fhir_user_password_path }}"
+  db_fhir_user_permanent_delete.password:
+    file: "{{ db_fhir_user_permanent_delete_password_path }}"
+
+  dms_public_key.pem:
+    file: "{{ dms_public_key_path }}"
+  dms_private_key.pem:
+    file: "{{ dms_private_key_path }}"
+
+volumes:
+  bpe-db-data:
+    name: "bpe-db-data"
+  fhir-db-data:
+    name: "fhir-db-data"
