@@ -42,7 +42,7 @@ resource "hcloud_primary_ip" "dsf_fhir" {
 resource "hcloud_server" "dsf_fhir" {
   name         = "dms-dsf-fhir"
   image        = "ubuntu-22.04"
-  server_type  = "cx11"
+  server_type  = "cx41"
   datacenter   = "fsn1-dc14"
   ssh_keys     = var.ssh_keys
   firewall_ids = [hcloud_firewall.dms.id]
