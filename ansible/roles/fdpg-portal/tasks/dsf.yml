@@ -72,6 +72,12 @@
       file:
         basename: "mii-process-report"
         extension: "jar"
+    - name: data-sharing
+      url: "https://github.com/medizininformatik-initiative/mii-process-data-sharing"
+      version: "{{ dsf_process_data_sharing_version }}"
+      file:
+        basename: "mii-process-data-sharing"
+        extension: "jar"
 
 - name: FDPG DSF BPE - Get environment config stats
   stat:
@@ -138,6 +144,8 @@
       value: |-
         medizininformatik-initiativede_reportAutostart|{{ dsf_process_report_version | regex_replace('^(\d+\.\d+)\.\d+\.\d+.*$', '\1') }}
         medizininformatik-initiativede_reportSend|{{ dsf_process_report_version | regex_replace('^(\d+\.\d+)\.\d+\.\d+.*$', '\1') }}
+        medizininformatik-initiativede_mergeDataSharing|{{ dsf_process_data_sharing_version | regex_replace('^(\d+\.\d+)\.\d+\.\d+.*$', '\1') }}
+        medizininformatik-initiativede_executeDataSharing|{{ dsf_process_data_sharing_version | regex_replace('^(\d+\.\d+)\.\d+\.\d+.*$', '\1') }}
 
 - name: Remove unused configuration entries
   lineinfile:
