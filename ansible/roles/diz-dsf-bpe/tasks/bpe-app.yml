@@ -11,6 +11,8 @@
     dest: "{{ secrets_path }}/bpe.diz-{{ instance }}.test.ffg.de.cer"
   - src:  "secrets/dsf/diz-{{ instance }}/bpe.diz-{{ instance }}.test.ffg.de.key"
     dest: "{{ secrets_path }}/bpe.diz-{{ instance }}.test.ffg.de.key"
+  - src:  "secrets/domain/root-ca.local.pem"
+    dest: "{{ secrets_path }}/root-ca.local.pem"
   - src:  "secrets/domain/root-ca.local.jks"
     dest: "{{ secrets_path }}/root-ca.local.jks"
   - src:  "secrets/dsf/diz-{{ instance }}/db_bpe_user.password"
@@ -100,9 +102,7 @@
     - name: FEASIBILITY_DSF_BPE_PROCESS_PLUGINS_DIRECTORY_PATH
       value: "{{ dsf_bpe_path }}/process"
     - name: FEASIBILITY_DSF_BPE_PROCESS_EXCLUDED
-      value: |-
-        medizininformatik-initiativede_feasibilityRequest|{{ dsf_process_feasibility_version | regex_replace('^(\d+\.\d+)\.\d+\.\d+.*$', '\1') }}
-        medizininformatik-initiativede_reportReceive|{{ dsf_process_report_version | regex_replace('^(\d+\.\d+)\.\d+\.\d+.*$', '\1') }}
+      value: medizininformatik-initiativede_feasibilityRequest|{{ dsf_process_feasibility_version | regex_replace('^(\d+\.\d+)\.\d+\.\d+.*$', '\1') }}, medizininformatik-initiativede_reportReceive|{{ dsf_process_report_version | regex_replace('^(\d+\.\d+)\.\d+\.\d+.*$', '\1') }}
     - name: FEASIBILITY_DSF_CLIENT_TRUST_CERTIFICATES_FILE
       value: "{{ secrets_path }}/trusted_cas.pem"
     - name: FEASIBILITY_DSF_DB_LIQUIBASE_PASSWORD_FILE
@@ -139,6 +139,14 @@
       value: "/run/secrets/root_ca.local.jks"
     - name: FEASIBILITY_DSF_CLIENT_PROCESS_TRUST_STORE_PASSWORD
       value: "password"
+    - name: DE_MEDIZININFORMATIK_INITIATIVE_REPORT_DIC_FHIR_SERVER_BASE_URL
+      value: "https://diz.triangle.local/fhir"
+    - name: DE_MEDIZININFORMATIK_INITIATIVE_REPORT_DIC_FHIR_SERVER_TRUST_CERTIFICATES
+      value: "/run/secrets/root_ca.local.pem"
+    - name: DE_MEDIZININFORMATIK_INITIATIVE_REPORT_DIC_FHIR_SERVER_BASICAUTH_USERNAME
+      value: "test"
+    - name: DE_MEDIZININFORMATIK_INITIATIVE_REPORT_DIC_FHIR_SERVER_BASICAUTH_PASSWORD
+      value: "{{ basic_auth_password.content | b64decode | trim }}"
 
 - name: DIZ DSF BPE - Remove proxy dependency and enable client store environment variables
   lineinfile:
@@ -158,13 +166,21 @@
   - regexp: '^(\s*)#\s*(.*)CLIENT_STORE_TRUST_STORE_PASSWORD(.*)$'
     line: '\1\2CLIENT_STORE_TRUST_STORE_PASSWORD\3'
 
-- name: DIZ DSF BPE - Add local ca trust store
+- name: DIZ DSF BPE - Add missing lines to docker compose configuration
   lineinfile:
     path: "{{ dsf_bpe_path }}/docker-compose.yml"
     insertafter: "{{ item.insertafter }}"
     line: "{{ item.line }}"
   loop:
   - insertafter: "^secrets:"
+    line: '  root_ca.local.pem: { file: "{{ secrets_path }}/root-ca.local.pem" }'
+  - insertafter: "^secrets:"
     line: '  root_ca.local.jks: { file: "{{ secrets_path }}/root-ca.local.jks" }'
   - insertafter: "^    - db_dic_1_bpe_user_camunda.password"
+    line: '    - root_ca.local.pem'
+  - insertafter: "^    - db_dic_1_bpe_user_camunda.password"
     line: '    - root_ca.local.jks'
+  - insertafter: "^      DE_MEDIZININFORMATIK_INITIATIVE_REPORT_DIC_FHIR_SERVER_TRUST_CERTIFICATES"
+    line: '      DE_MEDIZININFORMATIK_INITIATIVE_REPORT_DIC_FHIR_SERVER_BASICAUTH_USERNAME:'
+  - insertafter: "^      DE_MEDIZININFORMATIK_INITIATIVE_REPORT_DIC_FHIR_SERVER_TRUST_CERTIFICATES"
+    line: '      DE_MEDIZININFORMATIK_INITIATIVE_REPORT_DIC_FHIR_SERVER_BASICAUTH_PASSWORD:'
