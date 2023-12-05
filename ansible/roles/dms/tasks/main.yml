@@ -22,6 +22,8 @@
     dms_private_key_path: "{{ secrets_path }}/dms_private_key.pem"
     dsf_fhir_domain: "{{ dms_dsf_domain }}"
     organization_identifier: dms.test.forschen-fuer-gesundheit.de
+    data_sharing_version: "{{ dsf_process_data_sharing_version | regex_replace('^(\\d+\\.\\d+)\\.\\d+\\.\\d+.*$', '\\1') }}"
+    data_transfer_version: "{{ dsf_process_data_transfer_version | regex_replace('^(\\d+\\.\\d+)\\.\\d+\\.\\d+.*$', '\\1') }}"
 
 - name: "DMS - Create folders"
   file:
