@@ -14,5 +14,5 @@ mii_fhir_domain: fhir.test.forschen-fuer-gesundheit.de
 storage_host: u359202.your-storagebox.de
 storage_user: u359202-sub1
 dsf_process_ping_pong_version: "1.0.1.0"
-dsf_process_feasibility_version: "1.0.0.0"
+dsf_process_feasibility_version: "1.0.0.3"
 dsf_process_report_version: "1.0.0.0-RC3"
