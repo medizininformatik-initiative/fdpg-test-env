@@ -141,11 +141,7 @@
     - name: FEASIBILITY_DSF_DB_LIQUIBASE_PASSWORD_FILE
       value: "{{ secrets_path }}/db_liquibase.password"
     - name: FEASIBILITY_DSF_BPE_PROCESS_EXCLUDED
-      value: |-
-        medizininformatik-initiativede_reportAutostart|{{ dsf_process_report_version | regex_replace('^(\d+\.\d+)\.\d+\.\d+.*$', '\1') }}
-        medizininformatik-initiativede_reportSend|{{ dsf_process_report_version | regex_replace('^(\d+\.\d+)\.\d+\.\d+.*$', '\1') }}
-        medizininformatik-initiativede_mergeDataSharing|{{ dsf_process_data_sharing_version | regex_replace('^(\d+\.\d+)\.\d+\.\d+.*$', '\1') }}
-        medizininformatik-initiativede_executeDataSharing|{{ dsf_process_data_sharing_version | regex_replace('^(\d+\.\d+)\.\d+\.\d+.*$', '\1') }}
+      value: medizininformatik-initiativede_reportAutostart|{{ dsf_process_report_version | regex_replace('^(\d+\.\d+)\.\d+\.\d+.*$', '\1') }},medizininformatik-initiativede_reportSend|{{ dsf_process_report_version | regex_replace('^(\d+\.\d+)\.\d+\.\d+.*$', '\1') }},medizininformatik-initiativede_mergeDataSharing|{{ dsf_process_data_sharing_version | regex_replace('^(\d+\.\d+)\.\d+\.\d+.*$', '\1') }},medizininformatik-initiativede_executeDataSharing|{{ dsf_process_data_sharing_version | regex_replace('^(\d+\.\d+)\.\d+\.\d+.*$', '\1') }}
 
 - name: Remove unused configuration entries
   lineinfile:
