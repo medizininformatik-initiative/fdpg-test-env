@@ -91,6 +91,10 @@ User ubuntu
 Host diz-2-triangle
 Hostname 128.140.95.12
 User ubuntu
+
+Host mii-fhir
+Hostname 128.140.115.131
+User ubuntu
 ```
 
 ### Run all Playbooks

@@ -1,0 +1,4 @@
+---
+certbot_register_email: foo@example.com
+certbot_register_domain: www.example.com
+certbot_register_sans: []

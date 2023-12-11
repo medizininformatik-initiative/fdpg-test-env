@@ -78,3 +78,8 @@
   - blazectl
   - role: blaze-repo
     become_user: ubuntu
+
+- name: Setup MII FHIR Server
+  hosts: mii-fhir
+  roles:
+  - fhir-server

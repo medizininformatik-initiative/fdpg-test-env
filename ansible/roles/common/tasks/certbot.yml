@@ -1,0 +1,71 @@
+---
+- name: Register certbot
+  shell: |
+    docker run --rm \
+               --name certbot-register \
+               -v /etc/letsencrypt:/etc/letsencrypt \
+               -v /var/lib/letsencrypt:/var/lib/letsencrypt \
+               certbot/certbot -n register --agree-tos --email {{ certbot_register_email }}
+    touch /etc/letsencrypt/.registered
+  args:
+    creates: /etc/letsencrypt/.registered
+  tags:
+    - certbot
+
+- name: Setup Certbot Container
+  docker_container:
+    name: certbot-renew
+    image: certbot/certbot
+    command: "certonly -q --standalone --preferred-challenges http --keep-until-expiring -d {{ certbot_register_domain }}
+                       {%- if (certbot_register_sans is defined) and (certbot_register_sans is iterable) %}
+                         {%- for san in certbot_register_sans %} -d {{ san }}
+                         {%- endfor %}
+                       {%- endif %}"
+    ports:
+    - "80:80"
+    volumes:
+    - /etc/letsencrypt:/etc/letsencrypt
+    - /var/lib/letsencrypt:/var/lib/letsencrypt
+  tags:
+    - certbot
+
+- name: Wait until certificate is present before continuing
+  ansible.builtin.wait_for:
+    path: "/etc/letsencrypt/live/{{ certbot_register_domain }}"
+    timeout: 30
+
+- name: Setup cronjob for certificate renewal
+  cron:
+    name: certbot-renewal
+    job: /bin/bash -lc '/usr/bin/docker start certbot-renew'
+    minute: "0"
+    hour: "1"
+  tags:
+    - certbot
+
+- name: Get certificate path
+  shell: |
+    docker run --rm \
+               --name certbot-list \
+               -v /etc/letsencrypt:/etc/letsencrypt \
+               -v /var/lib/letsencrypt:/var/lib/letsencrypt \
+               certbot/certbot certificates | \
+    grep -A 100 'Certificate Name: {{ certbot_register_domain }}' | \
+    grep -m 1 -o -P '(?<=Certificate Path: )[\w\./-]+'
+  register: cert_path
+
+- name: Get private key path
+  shell: |
+    docker run --rm \
+               --name certbot-list \
+               -v /etc/letsencrypt:/etc/letsencrypt \
+               -v /var/lib/letsencrypt:/var/lib/letsencrypt \
+               certbot/certbot certificates | \
+    grep -A 100 'Certificate Name: {{ certbot_register_domain }}' | \
+    grep -m 1 -o -P '(?<=Private Key Path: )[\w\./-]+'
+  register: pkey_path
+
+- name: Copy certificate and private key paths to facts
+  set_fact:
+    certificate_path: "{{ cert_path.stdout}}"
+    private_key_path: "{{ pkey_path.stdout }}"

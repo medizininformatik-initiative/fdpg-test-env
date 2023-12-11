@@ -53,3 +53,9 @@ module "perf_test" {
   ssh_keys = [hcloud_ssh_key.akiel.id, data.hcloud_ssh_key.mruehle.id, data.hcloud_ssh_key.jgruendner.id]
   count    = terraform.workspace == "default" ? 1 : 0
 }
+
+module "mii_fhir" {
+  source   = "./modules/mii-fhir"
+  ssh_keys = [hcloud_ssh_key.akiel.id, data.hcloud_ssh_key.mruehle.id, data.hcloud_ssh_key.jgruendner.id]
+  count    = terraform.workspace == "default" ? 1 : 0
+}

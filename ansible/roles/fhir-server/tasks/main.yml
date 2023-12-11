@@ -1,0 +1,130 @@
+---
+# tasks file for roles/fhir-server
+- name: Install required packages
+  apt:
+    name:
+    - curl
+    state: present
+    update_cache: yes
+
+- name: MII FHIR - Setup Certbot
+  include_role:
+    name: common
+    tasks_from: certbot
+  vars:
+    certbot_register_email: "mathias.ruehle@uni-leipzig.de"
+    certbot_register_domain: "{{ mii_fhir_domain }}"
+
+- name: Create deployment directory
+  file:
+    path: "{{ deploy_path }}"
+    state: directory
+
+- name: Copy NGINX configuration
+  template:
+    src: nginx.conf.j2
+    dest: "{{ deploy_path }}/nginx.conf"
+    owner: "{{ deploy_user }}"
+    group: "{{ deploy_user }}"
+    mode: u=rw,g=r,o=r
+  register: nginx_conf
+
+- name: MII FHIR - Start Blaze FHIR Server
+  docker_compose:
+    project_name: mii-fhir
+    definition:
+      version: '3'
+      services:
+        blaze:
+          image: samply/blaze:0.22.3
+          restart: on-failure
+          healthcheck:
+            test: [ "CMD", "curl", "http://localhost:8080/health" ]
+            interval: 10s
+            timeout: 15s
+            retries: 5
+          networks:
+          - mii_fhir_network
+          environment:
+            BASE_URL: "https://{{ mii_fhir_domain }}"
+            LOG_LEVEL: "info"
+            JAVA_TOOL_OPTIONS: "-Xmx4g"
+          volumes:
+          - "blaze-data:/app/data"
+        nginx:
+          image: 'nginx:1.25.2'
+          restart: on-failure
+          networks:
+          - mii_fhir_network
+          ports:
+          - "443:8443"
+          volumes:
+          - "{{ certificate_path }}:/etc/nginx/cert.pem:ro"
+          - "{{ private_key_path }}:/etc/nginx/pkey.pem:ro"
+          - "{{ deploy_path }}/nginx.conf:/etc/nginx/nginx.conf:ro"
+          - /etc/letsencrypt/options-ssl-nginx.conf:/etc/nginx/options-ssl-nginx.conf:ro
+          depends_on:
+          - blaze
+      volumes:
+        blaze-data:
+      networks:
+        mii_fhir_network:
+  register: fhir_server_status
+
+- name: Wait until blaze server is up before continuing
+  ansible.builtin.wait_for:
+    host: "{{ mii_fhir_domain }}"
+    port: "443"
+    timeout: 60
+
+- name: Check if test data is already loaded
+  uri:
+    url: "https://{{ mii_fhir_domain }}/fhir/Patient"
+    method: GET
+    return_content: true
+    body_format: json
+  register: patient_stats
+
+- name: Create test data directory
+  file:
+    path: "{{ deploy_path }}/testdata"
+    state: directory
+  when: patient_stats.json.total == 0
+
+- name: Download and extract test data
+  unarchive:
+    src: https://health-atlas.de/data_files/594/download?version=1
+    dest: "{{ deploy_path }}/testdata"
+    remote_src: yes
+  when: patient_stats.json.total == 0
+
+- name: Find compressed bundles
+  find:
+    paths: "{{ deploy_path }}/testdata"
+    patterns: "*.json.zip"
+    recurse: true
+  register: compressed_bundles
+  when: patient_stats.json.total == 0
+
+- name: Decompress bundles
+  unarchive:
+    src: "{{ item.path }}"
+    dest: "{{ deploy_path }}/testdata"
+    remote_src: yes
+  loop: "{{ compressed_bundles.files | flatten(levels=1) }}"
+  when: patient_stats.json.total == 0
+
+- name: Get blaze container IP
+  set_fact:
+    blaze_ip: "{{ fhir_server_status.services.blaze['mii-fhir_blaze_1'].networks['mii-fhir_mii_fhir_network'].IPAddress }}"
+  when: patient_stats.json.total == 0
+
+- name: Upload test data
+  shell:
+    cmd: "for f in $(find {{ deploy_path }}/testdata -name '*.json'); do curl -Lsf -X POST -H 'Content-Type: application/json' -d @\"$f\" http://{{ blaze_ip }}:8080/fhir; done"
+  when: patient_stats.json.total == 0
+
+- name: Remove test data directory
+  file:
+    path: "{{ deploy_path }}/testdata"
+    state: absent

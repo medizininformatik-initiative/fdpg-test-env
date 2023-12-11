@@ -22,6 +22,9 @@ diz-2-dsf-bpe
 diz-1-triangle aktin=true
 diz-2-triangle aktin=false
 
+[mii_fhir]
+mii-fhir
+
 [portal:vars]
 ansible_user=root
 
@@ -41,4 +44,7 @@ ansible_user=root
 ansible_user=root
 
 [diz_triangle:vars]
+ansible_user=root
+
+[mii_fhir:vars]
 ansible_user=root
