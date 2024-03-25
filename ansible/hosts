@@ -25,6 +25,9 @@ diz-2-triangle aktin=false
 [mii_fhir]
 mii-fhir
 
+[dms]
+dms-dsf-fhir
+
 [portal:vars]
 ansible_user=root
 
@@ -47,4 +50,7 @@ ansible_user=root
 ansible_user=root
 
 [mii_fhir:vars]
+ansible_user=root
+
+[dms:vars]
 ansible_user=root

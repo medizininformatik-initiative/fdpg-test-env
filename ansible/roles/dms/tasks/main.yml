@@ -1,0 +1,139 @@
+---
+# tasks file for roles/dms
+- name: DMS - Set variables
+  set_fact:
+    bpe_cache_path: "{{ deploy_path }}/bpe/cache"
+    bpe_log_path: "{{ deploy_path }}/bpe/logs"
+    bpe_process_path: "{{ deploy_path }}/bpe/process"
+    fhir_log_path: "{{ deploy_path }}/fhir/logs"
+    nginx_conf_path: "{{ deploy_path }}/nginx.conf"
+    proxy_certificate_and_int_cas_path: "{{ secrets_path }}/dsf.dms.test.ffg.de.cer"
+    proxy_certificate_private_key_path: "{{ secrets_path }}/dsf.dms.test.ffg.de.key"
+    proxy_trusted_client_cas_path: "{{ secrets_path }}/trusted_cas.pem"
+    client_certificate_path: "{{ secrets_path }}/bpe.dms.test.ffg.de.cer"
+    client_certificate_private_key_path: "{{ secrets_path }}/bpe.dms.test.ffg.de.key"
+    client_trust_certificates_path: "{{ secrets_path }}/trusted_cas.pem"
+    db_liquibase_password_path: "{{ secrets_path }}/db_liquibase.password"
+    db_bpe_user_password_path: "{{ secrets_path }}/db_bpe_user.password"
+    db_bpe_user_camunda_password_path: "{{ secrets_path }}/db_bpe_user_camunda.password"
+    db_fhir_user_password_path: "{{ secrets_path }}/db_fhir_user.password"
+    db_fhir_user_permanent_delete_password_path: "{{ secrets_path }}/db_fhir_user_permanent_delete.password"
+    dms_public_key_path: "{{ secrets_path }}/dms_public_key.pem"
+    dms_private_key_path: "{{ secrets_path }}/dms_private_key.pem"
+    dsf_fhir_domain: "{{ dms_dsf_domain }}"
+    organization_identifier: dms.test.forschen-fuer-gesundheit.de
+    data_sharing_version: "{{ dsf_process_data_sharing_version | regex_replace('^(\\d+\\.\\d+)\\.\\d+\\.\\d+.*$', '\\1') }}"
+    data_transfer_version: "{{ dsf_process_data_transfer_version | regex_replace('^(\\d+\\.\\d+)\\.\\d+\\.\\d+.*$', '\\1') }}"
+
+- name: "DMS - Create folders"
+  file:
+    path: "{{ item.path }}"
+    state: directory
+    recurse: true
+    owner: "{{ deploy_user }}"
+    group: "{{ deploy_user }}"
+    mode: "{{ item.mode }}"
+  loop:
+  - path: "{{ secrets_path }}"
+    mode: "u=rwx,g=rx,o=rx"
+  - path: "{{ bpe_cache_path }}"
+    mode: "u=rwx,g=rwx,o=rwx"
+  - path: "{{ bpe_log_path }}"
+    mode: "u=rwx,g=rwx,o=rwx"
+  - path: "{{ bpe_process_path }}"
+    mode: "u=rwx,g=rx,o=rx"
+  - path: "{{ fhir_log_path }}"
+    mode: "u=rwx,g=rwx,o=rwx"
+
+- name: DMS - Upload secrets
+  include_role:
+    name: common
+    tasks_from: get-storage-file
+  vars:
+    storage_file_path: "{{ item.src }}"
+    host_file_path: "{{ item.dest }}"
+  loop:
+  - src:  "secrets/domain/test.ffg.de.cer"
+    dest: "{{ proxy_certificate_and_int_cas_path }}"
+  - src:  "secrets/domain/test.ffg.de.key"
+    dest: "{{ proxy_certificate_private_key_path }}"
+  - src:  "secrets/domain/trusted_cas.pem"
+    dest: "{{ proxy_trusted_client_cas_path }}"
+  - src:  "secrets/dsf/dms/bpe.dms.test.ffg.de.cer"
+    dest: "{{ client_certificate_path }}"
+  - src:  "secrets/dsf/dms/bpe.dms.test.ffg.de.key"
+    dest: "{{ client_certificate_private_key_path }}"
+  - src:  "secrets/dsf/dms/db_bpe_user.password"
+    dest: "{{ db_bpe_user_password_path }}"
+  - src:  "secrets/dsf/dms/db_bpe_user_camunda.password"
+    dest: "{{ db_bpe_user_camunda_password_path }}"
+  - src:  "secrets/dsf/dms/db_fhir_user.password"
+    dest: "{{ db_fhir_user_password_path }}"
+  - src:  "secrets/dsf/dms/db_fhir_user_permanent_delete.password"
+    dest: "{{ db_fhir_user_permanent_delete_password_path }}"
+  - src:  "secrets/dsf/dms/db_liquibase.password"
+    dest: "{{ db_liquibase_password_path }}"
+  - src:  "secrets/dsf/dms/dms_public_key.pem"
+    dest: "{{ dms_public_key_path }}"
+  - src:  "secrets/dsf/dms/dms_private_key.pem"
+    dest: "{{ dms_private_key_path }}"
+
+- name: DMS - Generate bpe certificate thumbprint
+  shell:
+    cmd: openssl x509 -noout -fingerprint -sha512 -inform pem -in "{{ secrets_path }}/bpe.dms.test.ffg.de.cer" | tr \[:upper:\] \[:lower:\] | tr -d ':' | sed 's/sha512 fingerprint=//'
+  register: cert_thumbprint
+  changed_when: false
+
+- name: DMS - Set fact for bpe certificate thumbprint
+  set_fact:
+    organization_thumbprint: "{{ cert_thumbprint.stdout | trim }}"
+    remote_user_thumbprint: "{{ cert_thumbprint.stdout | trim }}"
+
+- name: DMS - Install bpe process plugins
+  include_role:
+    name: common
+    tasks_from: dsf-bpe-install-plugins
+  vars:
+    process_plugin_folder_path: "{{ deploy_path }}/bpe/process"
+    process_plugins:
+    - name: ping-pong
+      url: "https://github.com/datasharingframework/dsf-process-ping-pong"
+      version: "{{ dsf_process_ping_pong_version }}"
+      file:
+        basename: "dsf-process-ping-pong"
+        extension: "jar"
+    - name: data-sharing
+      url: "https://github.com/medizininformatik-initiative/mii-process-data-sharing"
+      version: "{{ dsf_process_data_sharing_version }}"
+      file:
+        basename: "mii-process-data-sharing"
+        extension: "jar"
+    - name: data-transfer
+      url: "https://github.com/medizininformatik-initiative/mii-process-data-transfer"
+      version: "{{ dsf_process_data_transfer_version }}"
+      file:
+        basename: "mii-process-data-transfer"
+        extension: "jar"
+
+- name: "DMS - Deploy service files"
+  template:
+    src: "{{ item.src }}"
+    dest: "{{ deploy_path }}/{{ item.dest }}"
+    owner: "{{ deploy_user }}"
+    group: "{{ deploy_user }}"
+    mode: u=rw,g=r,o=r
+  loop:
+  - src: "docker-compose.yml.j2"
+    dest: "docker-compose.yml"
+  - src: "nginx.conf.j2"
+    dest: "nginx.conf"
+  register: "service_files"
+
+- name: DMS - Start services
+  community.docker.docker_compose:
+    project_src: "{{ deploy_path }}"
+    project_name: "dms"
+    files:
+    - docker-compose.yml
+    recreate: "{{ 'always' if service_files.results[1].changed == true else 'smart'}}"
+

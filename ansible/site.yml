@@ -17,6 +17,7 @@
   - diz_triangle
   - diz_dsf_fhir
   - diz_dsf_bpe
+  - dms
   roles:
   - role: user-ubuntu
     vars:
@@ -83,3 +84,8 @@
   hosts: mii-fhir
   roles:
   - fhir-server
+
+- name: Setup Datenmanagementstelle (DMS)
+  hosts: dms
+  roles:
+  - dms
