@@ -2,3 +2,7 @@
 .terraform.lock.hcl
 terraform.tfstate
 *.backup
+.remote-storage/terraform/*
+!.remote-storage/terraform/README.md
+.remote-storage/secrets/*
+!.remote-storage/secrets/README.md
