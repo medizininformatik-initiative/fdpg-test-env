@@ -1,9 +1,9 @@
 {
   "terraform": {
     "backend": {
-      "http": {
-        "address": "https://u359202-sub1.your-storagebox.de/terraform/terraform.tfstate",
-        "update_method": "PUT"
+      "local": {
+        "path": ".remote-storage/terraform.tfstate",
+        "workspace_dir": ".remote-storage/terraform"
       }
     }
   }

@@ -1,33 +1,10 @@
 ---
-- name: Create temporary file
-  delegate_to: localhost
-  tempfile:
-    state: file
-  register: tempfile
-  changed_when: false
-
-- name: Download storage file '{{ storage_file_path }}'
-  delegate_to: localhost
-  command:
-    cmd: "scp -pq {{ storage_user }}@{{ storage_host }}:{{ storage_file_path|quote }} {{ tempfile.path }}"
-  register: download
-  failed_when:
-  - download.rc != 0
-  changed_when: false
 
 - name: Upload to '{{ host_file_path }}'
   copy:
     force: true
-    src: "{{ tempfile.path }}"
+    src: "{{ storage_path }}/{{ storage_file_path|quote }}"
     dest: "{{ host_file_path|quote }}"
     owner: "{{ deploy_user }}"
     group: "{{ deploy_user }}"
     mode: '644'
-
-- name: Remove temporary file
-  delegate_to: localhost
-  file:
-    path: "{{ tempfile.path }}"
-    state: absent
-  when: tempfile.path is defined
-  changed_when: false
