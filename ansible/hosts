@@ -1,56 +1,75 @@
-[portal]
-fdpg
+[dev]
 
-[keycloak]
-fdpg-keycloak
+[dev:children]
+dev_portal
+dev_keycloak
+dev_diz_dsf_fhir
+dev_diz_dsf_bpe
+dev_diz_triangle
+dev_dms
 
-[monitoring]
-fdpg-monitoring
+[dev_portal]
+dev-fdpg
+
+[dev_keycloak]
+dev-fdpg-keycloak
+
+[dev_diz_dsf_fhir]
+dev-diz-1-dsf-fhir
+dev-diz-2-dsf-fhir
+
+[dev_diz_dsf_bpe]
+dev-diz-1-dsf-bpe
+dev-diz-2-dsf-bpe
+
+[dev_diz_triangle]
+dev-diz-1-triangle aktin=false
+dev-diz-2-triangle aktin=false
+
+[test]
+
+[test:children]
+test_portal
+test_keycloak
+test_diz_dsf_fhir
+test_diz_dsf_bpe
+test_diz_triangle
+test_dms
+mii_fhir
+perf_test
+
+[test_portal]
+test-fdpg
+
+[test_keycloak]
+test-fdpg-keycloak
+
+[test_monitoring]
+test-fdpg-monitoring
+
+[test_diz_dsf_fhir]
+test-diz-1-dsf-fhir
+test-diz-2-dsf-fhir
+
+[test_diz_dsf_bpe]
+test-diz-1-dsf-bpe
+test-diz-2-dsf-bpe
+
+[test_diz_triangle]
+test-diz-1-triangle aktin=true
+test-diz-2-triangle aktin=false
+
+[test_dms]
+test-dms-dsf-fhir
 
 [perf_test]
-fdpg-perf-test
+test-fdpg-perf-test
 
-[diz_dsf_fhir]
-diz-1-dsf-fhir
-diz-2-dsf-fhir
-
-[diz_dsf_bpe]
-diz-1-dsf-bpe
-diz-2-dsf-bpe
-
-[diz_triangle]
-diz-1-triangle aktin=true
-diz-2-triangle aktin=false
+[dev_dms]
+dev-dms-dsf-fhir
 
 [mii_fhir]
 mii-fhir
 
-[dms]
-dms-dsf-fhir
-
-[portal:vars]
-ansible_user=root
-
-[keycloak:vars]
-ansible_user=root
-
-[monitoring:vars]
-ansible_user=root
-
-[perf_test:vars]
-ansible_user=root
-
-[diz_dsf_fhir:vars]
-ansible_user=root
-
-[diz_dsf_bpe:vars]
-ansible_user=root
-
-[diz_triangle:vars]
-ansible_user=root
-
-[mii_fhir:vars]
-ansible_user=root
-
-[dms:vars]
+[all:vars]
 ansible_user=root

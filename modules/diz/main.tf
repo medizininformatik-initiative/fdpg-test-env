@@ -1,5 +1,5 @@
 resource "hcloud_firewall" "dmz" {
-  name = terraform.workspace == "default" ? format("diz-%d-dmz", var.number) : format("diz-%s-%d-dmz", terraform.workspace, var.number)
+  name = terraform.workspace == "default" ? format("diz-%d-dmz", var.number) : format("%s-diz-%d-dsf-dmz", terraform.workspace, var.number)
   rule {
     direction  = "in"
     protocol   = "tcp"
@@ -32,7 +32,7 @@ resource "hcloud_firewall" "dmz" {
 }
 
 resource "hcloud_firewall" "intern" {
-  name = terraform.workspace == "default" ? format("diz-%d-intern", var.number) : format("diz-%s-%d-intern", terraform.workspace, var.number)
+  name = terraform.workspace == "default" ? format("diz-%d-intern", var.number) : format("%s-diz-%d-dsf-intern", terraform.workspace, var.number)
   rule {
     direction  = "in"
     protocol   = "tcp"
@@ -45,7 +45,7 @@ resource "hcloud_firewall" "intern" {
 }
 
 resource "hcloud_network" "intern" {
-  name     = terraform.workspace == "default" ? format("diz-%d-intern", var.number) : format("diz-%s-%d-intern", terraform.workspace, var.number)
+  name     = terraform.workspace == "default" ? format("diz-%d-intern", var.number) : format("%s-diz-%d-dsf-intern", terraform.workspace, var.number)
   ip_range = "10.0.0.0/24"
 }
 
@@ -57,7 +57,7 @@ resource "hcloud_network_subnet" "intern" {
 }
 
 resource "hcloud_primary_ip" "dsf_fhir" {
-  name          = terraform.workspace == "default" ? format("diz-%d-dsf-fhir", var.number) : format("diz-%s-%d-dsf-fhir", terraform.workspace, var.number)
+  name          = terraform.workspace == "default" ? format("diz-%d-dsf-fhir", var.number) : format("%s-diz-%d-dsf-fhir", terraform.workspace, var.number)
   type          = "ipv4"
   datacenter    = "fsn1-dc14"
   assignee_type = "server"
@@ -65,7 +65,7 @@ resource "hcloud_primary_ip" "dsf_fhir" {
 }
 
 resource "hcloud_server" "dsf_fhir" {
-  name         = terraform.workspace == "default" ? format("diz-%d-dsf-fhir", var.number) : format("diz-%s-%d-dsf-fhir", terraform.workspace, var.number)
+  name         = terraform.workspace == "default" ? format("diz-%d-dsf-fhir", var.number) : format("%s-diz-%d-dsf-fhir", terraform.workspace, var.number)
   image        = "ubuntu-22.04"
   server_type  = "cx11"
   datacenter   = "fsn1-dc14"
@@ -80,7 +80,7 @@ resource "hcloud_server" "dsf_fhir" {
 }
 
 resource "hcloud_primary_ip" "dsf_bpe" {
-  name          = terraform.workspace == "default" ? format("diz-%d-dsf-bpe", var.number) : format("diz-%s-%d-dsf-bpe", terraform.workspace, var.number)
+  name          = terraform.workspace == "default" ? format("diz-%d-dsf-bpe", var.number) : format("%s-diz-%d-dsf-bpe", terraform.workspace, var.number)
   type          = "ipv4"
   datacenter    = "fsn1-dc14"
   assignee_type = "server"
@@ -88,7 +88,7 @@ resource "hcloud_primary_ip" "dsf_bpe" {
 }
 
 resource "hcloud_primary_ip" "triangle" {
-  name          = terraform.workspace == "default" ? format("diz-%d-triangle", var.number) : format("diz-%s-%d-triangle", terraform.workspace, var.number)
+  name          = terraform.workspace == "default" ? format("diz-%d-triangle", var.number) : format("%s-diz-%d-dsf-triangle", terraform.workspace, var.number)
   type          = "ipv4"
   datacenter    = "fsn1-dc14"
   assignee_type = "server"
@@ -96,7 +96,7 @@ resource "hcloud_primary_ip" "triangle" {
 }
 
 resource "hcloud_server" "dsf_bpe" {
-  name         = terraform.workspace == "default" ? format("diz-%d-dsf-bpe", var.number) : format("diz-%s-%d-dsf-bpe", terraform.workspace, var.number)
+  name         = terraform.workspace == "default" ? format("diz-%d-dsf-bpe", var.number) : format("%s-diz-%d-dsf-bpe", terraform.workspace, var.number)
   image        = "ubuntu-22.04"
   server_type  = "cx11"
   datacenter   = "fsn1-dc14"
@@ -116,7 +116,7 @@ resource "hcloud_server" "dsf_bpe" {
 }
 
 resource "hcloud_server" "triangle" {
-  name        = terraform.workspace == "default" ? format("diz-%d-triangle", var.number) : format("diz-%s-%d-triangle", terraform.workspace, var.number)
+  name        = terraform.workspace == "default" ? format("diz-%d-triangle", var.number) : format("%s-diz-%d-dsf-triangle", terraform.workspace, var.number)
   image       = "ubuntu-22.04"
   server_type = "cx31"
   datacenter  = "fsn1-dc14"

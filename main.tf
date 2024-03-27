@@ -24,7 +24,7 @@ module "diz" {
     data.hcloud_ssh_key.jgruendner.id,
     data.hcloud_ssh_key.rwettstein.id
   ]
-  count    = terraform.workspace == "default" ? 2 : 0
+  count    = terraform.workspace == "test" || terraform.workspace == "dev" ? 2 : 0
 }
 
 module "fdpg" {
@@ -45,17 +45,17 @@ module "dms" {
 module "monitoring" {
   source   = "./modules/monitoring"
   ssh_keys = [hcloud_ssh_key.akiel.id, data.hcloud_ssh_key.mruehle.id, data.hcloud_ssh_key.jgruendner.id]
-  count    = terraform.workspace == "default" ? 1 : 0
+  count    = terraform.workspace == "test" ? 1 : 0
 }
 
 module "perf_test" {
   source   = "./modules/perf-test"
   ssh_keys = [hcloud_ssh_key.akiel.id, data.hcloud_ssh_key.mruehle.id, data.hcloud_ssh_key.jgruendner.id]
-  count    = terraform.workspace == "default" ? 1 : 0
+  count    = terraform.workspace == "test" ? 1 : 0
 }
 
 module "mii_fhir" {
   source   = "./modules/mii-fhir"
   ssh_keys = [hcloud_ssh_key.akiel.id, data.hcloud_ssh_key.mruehle.id, data.hcloud_ssh_key.jgruendner.id]
-  count    = terraform.workspace == "default" ? 1 : 0
+  count    = terraform.workspace == "test" ? 1 : 0
 }
