@@ -13,6 +13,7 @@ The Terraform state is shared using a remote storage mounted to the local path `
 ```sh
 sshfs u359202-sub1@u359202.your-storagebox.de:/terraform .remote-storage/terraform -o uid=$(id -u),gid=$(id -g),workaround=truncate
 ```
+Possible hosts and host groups are listed in `ansible/site.yml`.
 
 For this to work your ssh public key needs to be added to the storage box authorized keys file beforehand.
 
@@ -26,7 +27,7 @@ terraform init
 ###<a id="choose-terraform-workspace"></a> Choose Terraform Workspace
 
 ```sh
-terraform workspace select default
+terraform workspace select dev
 ```
 
 ```sh
@@ -48,12 +49,78 @@ We use ansible-playbook v2.14.5.
 Everyone has to add this to his `~/.ssh/config` because Ansible works with this names:
 
 ```text
-Host fdpg
+# FDPG Development Environment
+Host dev-fdpg
+Hostname 91.107.210.198
+User ubuntu
+
+Host dev-fdpg-keycloak
+Hostname 188.34.191.244
+User ubuntu
+
+Host dev-diz-1-dsf-fhir
+Hostname 88.198.173.77
+User ubuntu
+
+Host dev-diz-1-dsf-bpe
+Hostname 188.34.181.226
+User ubuntu
+
+Host dev-diz-1-triangle
+Hostname 128.140.62.38
+User ubuntu
+
+Host dev-diz-2-dsf-fhir
+Hostname 128.140.80.17
+User ubuntu
+
+Host dev-diz-2-dsf-bpe
+Hostname 138.201.116.210
+User ubuntu
+
+Host dev-diz-2-triangle
+Hostname 5.75.240.43
+User ubuntu
+
+Host dev-dms-dsf-fhir
+HostName 128.140.60.107
+User ubuntu
+
+# FDPG Test Environment
+Host test-fdpg
 Hostname 91.107.208.91
 User ubuntu
 
-Host fdpg-keycloak
+Host test-fdpg-keycloak
 Hostname 49.13.3.64
+User ubuntu
+
+Host test-dms-dsf-fhir
+Hostname 162.55.171.40
+User ubuntu
+
+Host test-diz-1-dsf-fhir
+Hostname 49.12.77.194
+User ubuntu
+
+Host test-diz-1-dsf-bpe
+Hostname 128.140.80.15
+User ubuntu
+
+Host test-diz-1-triangle
+Hostname 167.235.246.101
+User ubuntu
+
+Host test-diz-2-dsf-fhir
+Hostname 128.140.89.16
+User ubuntu
+
+Host test-diz-2-dsf-bpe
+Hostname 49.12.215.228
+User ubuntu
+
+Host test-diz-2-triangle
+Hostname 128.140.95.12
 User ubuntu
 
 Host fdpg-monitoring
@@ -62,34 +129,6 @@ User ubuntu
 
 Host fdpg-perf-test
 Hostname 49.13.17.192
-User ubuntu
-
-Host dms-dsf-fhir
-Hostname 162.55.171.40
-User ubuntu
-
-Host diz-1-dsf-fhir
-Hostname 49.12.77.194
-User ubuntu
-
-Host diz-1-dsf-bpe
-Hostname 128.140.80.15
-User ubuntu
-
-Host diz-1-triangle
-Hostname 167.235.246.101
-User ubuntu
-
-Host diz-2-dsf-fhir
-Hostname 128.140.89.16
-User ubuntu
-
-Host diz-2-dsf-bpe
-Hostname 49.12.215.228
-User ubuntu
-
-Host diz-2-triangle
-Hostname 128.140.95.12
 User ubuntu
 
 Host mii-fhir
@@ -122,9 +161,8 @@ ansible -i hosts -m ansible.builtin.setup <hostname>
 
 ```sh
 cd <PROJECT_DIR>/ansible
-ansible-playbook -i hosts site.yml --limit monitoring,diz-1-dsf-fhir
+ansible-playbook -i hosts site.yml --limit dev,diz-1-dsf-fhir
 ```
-Possible hosts and host groups are listed in `ansible/site.yml`.
 
 ##<a id="development"></a> Development
 
