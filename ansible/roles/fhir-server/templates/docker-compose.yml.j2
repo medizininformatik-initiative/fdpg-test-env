@@ -1,0 +1,30 @@
+services:
+  blaze:
+    image: samply/blaze:0.26.0
+    restart: on-failure
+    healthcheck:
+      test: [ "CMD", "curl", "http://localhost:8080/health" ]
+      interval: 10s
+      timeout: 15s
+      retries: 5
+    environment:
+      BASE_URL: "https://{{ mii_fhir_domain }}"
+      LOG_LEVEL: "info"
+      JAVA_TOOL_OPTIONS: "-Xmx4g"
+    volumes:
+    - "blaze-data:/app/data"
+
+  proxy:
+    image: 'nginx:1.25.4'
+    restart: on-failure
+    ports:
+    - "443:8443"
+    volumes:
+    - "{{ certificate_path }}:/etc/nginx/cert.pem:ro"
+    - "{{ private_key_path }}:/etc/nginx/pkey.pem:ro"
+    - "{{ deploy_path }}/nginx.conf:/etc/nginx/nginx.conf:ro"
+    depends_on:
+    - blaze
+
+volumes:
+  blaze-data:

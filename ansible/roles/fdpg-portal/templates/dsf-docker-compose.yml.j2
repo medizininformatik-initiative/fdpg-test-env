@@ -1,0 +1,128 @@
+services:
+
+  db:
+    image: postgres:15
+    restart: on-failure
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U liquibase_user -d postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - type: volume
+        source: db-data
+        target: /var/lib/postgresql/data
+      - type: bind
+        source: ${DSF_DB_INIT_SCRIPT:-./init-db.sh}
+        target: /docker-entrypoint-initdb.d/init-db.sh
+    environment:
+      TZ: Europe/Berlin
+      POSTGRES_PASSWORD_FILE: /run/secrets/db_liquibase.password
+      POSTGRES_USER: liquibase_user
+      POSTGRES_DB: postgres
+    secrets:
+      - db_liquibase.password
+
+  fhir-app:
+    image: ghcr.io/datasharingframework/fhir:{{ dsf_version }}
+    healthcheck:
+      test: [ "CMD-SHELL", "./healthcheck.sh" ]
+      interval: 10s
+      timeout: 15s
+      retries: 5
+    restart: on-failure
+    secrets:
+      - db_liquibase.password
+      - db_user.password
+      - db_user_permanent_delete.password
+      - app_client_trust_certificates.pem
+      - app_client_certificate.pem
+      - app_client_certificate_private_key.pem
+      - ssl_ca_certificate_file.pem
+    volumes:
+      - type: bind
+        source: ${DSF_FHIR_LOG_FOLDER_PATH:-./log}
+        target: /opt/fhir/log
+    env_file:
+      - path: ./fhir.env.default
+      - path: ./fhir.env
+        required: false
+    environment:
+      DEV_DSF_SERVER_AUTH_TRUST_CLIENT_CERTIFICATE_CAS:  /run/secrets/ssl_ca_certificate_file.pem
+      DEV_DSF_FHIR_DB_LIQUIBASE_PASSWORD_FILE: /run/secrets/db_liquibase.password
+      DEV_DSF_FHIR_DB_USER_PASSWORD_FILE: /run/secrets/db_user.password
+      DEV_DSF_FHIR_DB_USER_PERMANENT_DELETE_PASSWORD_FILE: /run/secrets/db_user_permanent_delete.password
+      DEV_DSF_FHIR_CLIENT_TRUST_SERVER_CERTIFICATE_CAS: /run/secrets/app_client_trust_certificates.pem
+      DEV_DSF_FHIR_CLIENT_CERTIFICATE: /run/secrets/app_client_certificate.pem
+      DEV_DSF_FHIR_CLIENT_CERTIFICATE_PRIVATE_KEY: /run/secrets/app_client_certificate_private_key.pem
+
+    depends_on:
+      - db
+
+  bpe-app:
+    image: ghcr.io/datasharingframework/bpe:{{ dsf_version }}
+    healthcheck:
+      test: [ "CMD-SHELL", "./healthcheck.sh" ]
+      interval: 10s
+      timeout: 15s
+      retries: 5
+    restart: on-failure
+    secrets:
+      - db_liquibase.password
+      - db_user.password
+      - db_user_camunda.password
+      - app_client_trust_certificates.pem
+      - app_client_certificate.pem
+      - app_client_certificate_private_key.pem
+      - ssl_ca_certificate_file.pem
+    volumes:
+      - type: bind
+        source: ${DSF_BPE_PROCESS_PLUGINS_DIRECTORY_PATH:-./process}
+        target: /opt/bpe/process
+        read_only: true
+      - type: bind
+        source: ${DSF_BPE_LOG_FOLDER_PATH:-./log}
+        target: /opt/bpe/log
+      - type: bind
+        source: ${DSF_BPE_CACHE_FOLDER_PATH:-./cache}
+        target: /opt/bpe/cache
+    env_file:
+      - path: ./bpe.env.default
+      - path: ./bpe.env
+        required: false
+    environment:
+      DEV_DSF_SERVER_AUTH_TRUST_CLIENT_CERTIFICATE_CAS: /run/secrets/ssl_ca_certificate_file.pem
+      DEV_DSF_BPE_DB_LIQUIBASE_PASSWORD_FILE: /run/secrets/db_liquibase.password
+      DEV_DSF_BPE_DB_USER_PASSWORD_FILE: /run/secrets/db_user.password
+      DEV_DSF_BPE_DB_USER_CAMUNDA_PASSWORD_FILE: /run/secrets/db_user_camunda.password
+      DEV_DSF_BPE_FHIR_CLIENT_TRUST_SERVER_CERTIFICATE_CAS: /run/secrets/app_client_trust_certificates.pem
+      DEV_DSF_BPE_FHIR_CLIENT_CERTIFICATE: /run/secrets/app_client_certificate.pem
+      DEV_DSF_BPE_FHIR_CLIENT_CERTIFICATE_PRIVATE_KEY: /run/secrets/app_client_certificate_private_key.pem
+      DEV_DSF_BPE_DB_URL: jdbc:postgresql://db/bpe
+    depends_on:
+      - db
+      - fhir-app
+
+volumes:
+  db-data:
+    name: {{ project_name }}-dsf-db-data
+
+secrets:
+  db_liquibase.password:
+    file: ${DSF_DB_LIQUIBASE_PASSWORD_FILE:-./secrets/db_liquibase.password}
+  db_user.password:
+    file: ${DSF_DB_USER_PASSWORD_FILE:-./secrets/db_user.password}
+  db_user_camunda.password:
+    file: ${DSF_DB_USER_CAMUNDA_PASSWORD_FILE:-./secrets/db_user_camunda.password}
+  db_user_permanent_delete.password:
+    file: ${DSF_DB_USER_PERMANENT_DELETE_PASSWORD_FILE:-./secrets/db_user_permanent_delete.password}
+
+  app_client_trust_certificates.pem:
+    file: ${DSF_CA_CERTIFICATE:-./secrets/ssl_root_ca_certificate_file.pem}
+  app_client_certificate.pem:
+    file: ${DSF_CLIENT_CERTIFICATE:-./secrets/client_certificate.pem}
+  app_client_certificate_private_key.pem:
+    file: ${DSF_CLIENT_PRIVATE_KEY:-./secrets/client_certificate_private_key.pem}
+
+  ssl_ca_certificate_file.pem:
+    file: ${DSF_SERVER_CLIENT_CERTIFICATES_CA:-./secrets/ssl_ca_certificate_file.pem}

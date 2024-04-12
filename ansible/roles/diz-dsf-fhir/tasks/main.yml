@@ -1,57 +1,148 @@
 ---
 # tasks file for diz-dsf-fhir
-- name: DSF FHIR - Checkout FDPG Deployment
-  include_role:
-    name: common
-    tasks_from: checkout-deploy-repo
-  vars:
-    feasibility_deploy_version: readd-dsf
-
 - name: DSF FHIR - Extract DIZ instance from hostname
   set_fact:
-    diz_instance: "{{ inventory_hostname | regex_replace('^diz-(\\d+)-(.*)$', '\\1') }}"
-  failed_when: inventory_hostname is not regex('^diz-\d+-')
+    diz_instance: "{{ inventory_hostname | regex_replace('^.*-diz-(\\d+)-.*$', '\\1') }}"
+  failed_when: inventory_hostname is not regex('^.*-diz-\d+-.*$')
 
-- name: DSF FHIR - Get environment config stats
-  stat:
-    path: "{{ deploy_path }}/feasibility-triangle/dsf-client/.env"
-  register: dsf_fhir_env
+- name: DSF FHIR - Set Module Variables
+  set_fact:
+    domain: "{{ lookup('vars', 'diz_' + diz_instance + '_dsf_domain' ) }}"
+    project_path: "{{ deploy_path }}/dsf-fhir"
+    dsf_organization_identifier: "{{ lookup('vars', 'diz_' + diz_instance + '_dsf_organization_identifier') }}"
 
-- name: DSF FHIR - Get default environment config stats
-  stat:
-    path: "{{ deploy_path }}/feasibility-triangle/dsf-client/.env.default"
-  register: dsf_fhir_env_default
+- name: DSF FHIR - Create folders
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ deploy_user }}"
+    group: "{{ deploy_user }}"
+    mode: "777"
+  loop:
+  - "{{ secrets_path }}"
+  - "{{ project_path }}/log"
 
-- name: DSF FHIR - Copy default environment config
-  copy:
-    src: "{{ deploy_path }}/feasibility-triangle/dsf-client/.env.default"
-    dest: "{{ deploy_path }}/feasibility-triangle/dsf-client/.env"
-    owner: ubuntu
-    group: ubuntu
-    mode: u+rw,g-wx,o-rwx
-    remote_src: true
-  when: dsf_fhir_env.stat.exists == false or dsf_fhir_env.stat.ctime < dsf_fhir_env_default.stat.ctime
-
-- name: DSF FHIR - Configure Proxy
-  include_tasks: proxy.yml
+- name: DSF FHIR - Upload secrets
+  include_role:
+    name: common
+    tasks_from: get-storage-file
   vars:
-    instance: "{{ diz_instance }}"
-    dsf_fhir_path: "{{ deploy_path }}/feasibility-triangle/dsf-client"
+    storage_file_path: "{{ item.src }}"
+    host_file_path: "{{ item.dest }}"
+  loop:
+  - src:  "secrets/{{ env }}/dsf/diz-{{ diz_instance }}/bpe.diz-{{ diz_instance }}.{{ env }}.ffg.de.crt"
+    dest: "{{ secrets_path }}/bpe.diz-{{ diz_instance }}.{{ env }}.ffg.de.crt"
+  - src:  "secrets/{{ env }}/dsf/diz-{{ diz_instance }}/bpe.diz-{{ diz_instance }}.{{ env }}.ffg.de.key"
+    dest: "{{ secrets_path }}/bpe.diz-{{ diz_instance }}.{{ env }}.ffg.de.key"
+  - src:  "secrets/{{ env }}/dsf/diz-{{ diz_instance }}/db_user.password"
+    dest: "{{ secrets_path }}/db_user.password"
+  - src:  "secrets/{{ env }}/dsf/diz-{{ diz_instance }}/db_user_camunda.password"
+    dest: "{{ secrets_path }}/db_user_camunda.password"
+  - src:  "secrets/{{ env }}/dsf/diz-{{ diz_instance }}/db_user_permanent_delete.password"
+    dest: "{{ secrets_path }}/db_user_permanent_delete.password"
+  - src:  "secrets/{{ env }}/dsf/diz-{{ diz_instance }}/db_liquibase.password"
+    dest: "{{ secrets_path }}/db_liquibase.password"
+  - src:  "secrets/{{ env }}/domain/trusted_cas.pem"
+    dest: "{{ secrets_path }}/trusted_cas.pem"
 
-- name: DSF FHIR - Configure FHIR app
-  include_tasks: fhir-app.yml
+- name: Get Certificate and Key from Storage
+  include_role:
+    name: common
+    tasks_from: get-storage-file
   vars:
-    instance: "{{ diz_instance }}"
-    dsf_fhir_path: "{{ deploy_path }}/feasibility-triangle/dsf-client"
+    storage_file_path: "{{ item.src }}"
+    host_file_path: "{{ item.dest }}"
+  loop:
+  - src:  "secrets/{{ env }}/domain/fdpg.{{ env }}.ffg.de.crt"
+    dest: "{{ secrets_path }}/fdpg.{{ env }}.ffg.de.cer"
+  - src:  "secrets/{{ env }}/domain/fdpg.{{ env }}.ffg.de.key"
+    dest: "{{ secrets_path }}/fdpg.{{ env }}.ffg.de.key"
+  when: not letsencrypt_enabled
 
+- name: Set Certificate and Key Path Variables
+  set_fact:
+    certificate_path: "{{ secrets_path }}/fdpg.{{ env }}.ffg.de.crt"
+    private_key_path: "{{ secrets_path }}/fdpg.{{ env }}.ffg.de.key"
+  when: not letsencrypt_enabled
+
+- name: Get Certificate and Key from LetsEncrypt
+  include_role:
+    name: common
+    tasks_from: certbot
+  vars:
+    certbot_register_email: info@tmf-ev.de
+    certbot_register_domain: "{{ domain }}"
+    certificates_path: "{{ secrets_path }}/letsencrypt"
+    certbot_user_id: 101
+    certbot_group_id: 101
+  when: letsencrypt_enabled
+
+- name: DSF FHIR - Generate Client Certificate Thumbprint
+  shell:
+    cmd: openssl x509 -noout -fingerprint -sha512 -inform pem -in {{ item }} | tr \[:upper:\] \[:lower:\] | tr -d ':' | sed 's/sha512 fingerprint=//'
+  delegate_to: localhost
+  loop:
+  - "{{ storage_path }}/secrets/{{ env }}/dsf/diz-{{ diz_instance }}/bpe.diz-{{ diz_instance }}.{{ env }}.ffg.de.crt"
+  - "{{ storage_path }}/secrets/{{ env }}/dsf/Webbrowser_Test_User/Webbrowser_Test_User.{{ env }}.ffg.de.crt"
+  - "{{ storage_path }}/secrets/{{ env }}/dsf/fdpg/bpe.fdpg.{{ env }}.ffg.de.crt"
+  - "{{ storage_path }}/secrets/{{ env }}/dsf/dms/bpe.dms.{{ env }}.ffg.de.crt"
+  register: cert_thumbprint
+  changed_when: false
+
+- name: DSF FHIR - Extract Certificate Thumbprints to variables
+  set_fact:
+    dsf_organization_thumbprint: "{{ cert_thumbprint.results[0].stdout }}"
+    webbrowser_test_user_thumbprint: "{{ cert_thumbprint.results[1].stdout }}"
+    fdpg_organization_thumbprint: "{{ cert_thumbprint.results[2].stdout }}"
+    dms_organization_thumbprint: "{{ cert_thumbprint.results[3].stdout }}"
+  changed_when: false
+
+- name: DSF FHIR - Generate files from templates
+  template:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+    owner: "{{ deploy_user }}"
+    group: "{{ deploy_user }}"
+    mode: u+rw,g+r,o+r
+  loop:
+  - src: "docker-compose.yml.j2"
+    dest: "{{ project_path }}/docker-compose.yml"
+  - src: "dsf-fhir.env.default.j2"
+    dest: "{{ project_path }}/fhir.env.default"
+  - src: "nginx.conf.j2"
+    dest: "{{ project_path }}/nginx.conf"
+  - src: "allowlist.xml.j2"
+    dest: "{{ project_path }}/allowlist.xml"
 
 - name: DSF FHIR - Start container
-  community.docker.docker_compose:
-    project_src: "{{ deploy_path }}/feasibility-triangle/dsf-client"
-    project_name: "feasibility"
-    files:
-    - docker-compose.yml
-    services:
-    - dsf-dic-fhir-db
-    - dsf-dic-fhir-app
-    - dsf-dic-fhir-proxy
+  community.docker.docker_compose_v2:
+    project_src: "{{ project_path }}"
+    project_name: "diz-{{ diz_instance }}"
+
+- name: DSF FHIR - Wait for FHIR app
+  uri:
+    url: "https://{{ domain }}/fhir/metadata"
+    method: GET
+    ca_path: "{{ secrets_path }}/trusted_cas.pem"
+    client_cert: "{{ secrets_path }}/bpe.diz-{{ diz_instance }}.{{ env }}.ffg.de.crt"
+    client_key: "{{ secrets_path }}/bpe.diz-{{ diz_instance }}.{{ env }}.ffg.de.key"
+  register: _result
+  until: _result.status == 200
+  retries: 12 # 12 * 10s = 120s
+  delay: 10 # Every 5 seconds
+
+- name: DSF FHIR - Upload Allow List
+  uri:
+    remote_src: true
+    url: "https://{{ domain }}/fhir/"
+    method: POST
+    ca_path: "{{ secrets_path }}/trusted_cas.pem"
+    client_cert: "{{ secrets_path }}/bpe.diz-{{ diz_instance }}.{{ env }}.ffg.de.crt"
+    client_key: "{{ secrets_path }}/bpe.diz-{{ diz_instance }}.{{ env }}.ffg.de.key"
+    headers:
+      Content-Type: application/fhir+xml
+    src: "{{ project_path }}/allowlist.xml"
+    timeout: 60
+    status_code:
+    - 200
+    - 201

@@ -1,0 +1,84 @@
+---
+- name: FDPG Proxy
+  tags: proxy
+  block:
+  - name: FDPG Proxy - Get secrets
+    include_role:
+      name: common
+      tasks_from: get-storage-file
+    vars:
+      storage_file_path: "{{ item.src }}"
+      host_file_path: "{{ item.dest }}"
+    loop:
+    - src:  "secrets/{{ env }}/domain/trusted_cas.pem"
+      dest: "{{ secrets_path }}/trusted_cas.pem"
+
+  - name: Get Certificate and Key from Storage
+    include_role:
+      name: common
+      tasks_from: get-storage-file
+    vars:
+      storage_file_path: "{{ item.src }}"
+      host_file_path: "{{ item.dest }}"
+    loop:
+    - src:  "secrets/{{ env }}/domain/fdpg.{{ env }}.ffg.de.crt"
+      dest: "{{ secrets_path }}/fdpg.{{ env }}.ffg.de.crt"
+    - src:  "secrets/{{ env }}/domain/fdpg.{{ env }}.ffg.de.key"
+      dest: "{{ secrets_path }}/fdpg.{{ env }}.ffg.de.key"
+    when: not letsencrypt_enabled
+
+  - name: Set Certificate and Key Path Variables
+    set_fact:
+      certificate_path: "{{ secrets_path }}/fdpg.test.ffg.de.crt"
+      private_key_path: "{{ secrets_path }}/fdpg.test.ffg.de.key"
+    when: not letsencrypt_enabled
+
+  - name: Get Certificate and Key from LetsEncrypt
+    include_role:
+      name: common
+      tasks_from: certbot
+    vars:
+      certbot_register_email: info@tmf-ev.de
+      certbot_register_domain: "{{ fdpg_portal_domain }}"
+      certbot_register_sans:
+      - "{{ fdpg_portal_dsf_domain }}"
+      - "{{ fdpg_portal_aktin_domain }}"
+      certificates_path: "{{ secrets_path }}/letsencrypt"
+      certbot_user_id: 101
+      certbot_group_id: 101
+    when: letsencrypt_enabled
+
+  - name: FDPG Proxy - Copy nginx configuration
+    template:
+      src: proxy-nginx.conf.j2
+      dest: "{{ project_path }}/nginx.conf"
+      owner: "{{ deploy_user }}"
+      group: "{{ deploy_user }}"
+      mode: u=rw,g=r,o=r
+
+  - name: FDPG Proxy - Set environment variables
+    template:
+      src: proxy.env.j2
+      dest: "{{ project_path }}/.env"
+      owner: "{{ deploy_user }}"
+      group: "{{ deploy_user }}"
+      mode: u=rw,g=r,o=r
+    vars:
+      nginx_conf: "{{ project_path }}/nginx.conf"
+      trusted_cas: "{{ secrets_path }}/trusted_cas.pem"
+      certificate: "{{ certificate_path }}"
+      private_key: "{{ private_key_path }}"
+
+  - name: FDPG Proxy - Add CA to docker compose configuration
+    lineinfile:
+      path: "{{ project_path }}/docker-compose.yml"
+      insertafter: '^\s*volumes:$'
+      line: "      - ${PROXY_TRUSTED_CA_CERTIFICATE_PATH:-../auth/trusted_cas.pem}:/etc/nginx/conf.d/ca.pem"
+
+  - name: FDPG Proxy - Start Proxy
+    community.docker.docker_compose_v2:
+      project_src: "{{ project_path }}"
+      project_name: "{{ project_name }}"
+      recreate: "always"
+    environment:
+      COMPOSE_IGNORE_ORPHANS: "1"
