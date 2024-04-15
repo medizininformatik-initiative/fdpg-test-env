@@ -11,7 +11,7 @@ We use Terraform v1.4.5+.
 The Terraform state is shared using a remote storage mounted to the local path `.remote-storage/terraform/`. To be able to use the backend, which is necessary for all terraform commands interacting with the actual infrastructure, you need to mount the storage before executing any terraform commands. The recommended mount option is to use SSHFS (with workaround to prevent invalid terraform state if state shrinks):
 
 ```sh
-sshfs u359202-sub1@u359202.your-storagebox.de:/terraform .remote-storage/terraform -o uid=$(id -u),gid=$(id -g),workaround=truncate
+sshfs u359202-sub1@u359202.your-storagebox.de:/terraform .remote-storage/terraform -o uid=$(id -u),gid=$(id -g),workaround=truncate,reconnect
 ```
 Possible hosts and host groups are listed in `ansible/site.yml`.
 
@@ -148,7 +148,7 @@ ansible-playbook -i hosts site.yml
 For accessing the test environment hosts and secrets you need your personal SSH public key being added to the Hetzner Cloud and deployed to the hosts and the Hetzner Storage Box by an already permitted user. Then you need to mount the secrets in **read-only** mode to the mountpoint `.remote-storage/secrets/`. The recommended way of mounting is to use *SSHFS*:
 
 ```sh
-sshfs u359202-sub1@u359202.your-storagebox.de:/secrets .remote-storage/secrets -o uid=$(id -u),gid=$(id -g),ro
+sshfs u359202-sub1@u359202.your-storagebox.de:/secrets .remote-storage/secrets -o uid=$(id -u),gid=$(id -g),ro,reconnect
 ```
 
 ###<a id="discover-facts"></a> Discover Facts
