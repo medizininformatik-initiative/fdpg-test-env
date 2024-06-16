@@ -14,13 +14,73 @@ diz_1_dsf_organization_identifier: diz-1.dev.forschen-fuer-gesundheit.de
 diz_2_dsf_organization_identifier: diz-2.dev.forschen-fuer-gesundheit.de
 dms_dsf_organization_identifier: dms.dev.forschen-fuer-gesundheit.de
 letsencrypt_enabled: true
-dsf_version: "1.5.0"
-dsf_process_ping_pong_version: "1.0.1.0"
-dsf_process_feasibility_version: "1.0.0.4"
-dsf_process_report_version: "1.0.0.0"
-dsf_process_data_sharing_version: "1.0.0.0-RC1"
-dsf_process_data_transfer_version: "1.0.0.0-RC2"
 feasibility_evaluation_obfuscate: false
+dsf_version: "1.5.1"
+dsf_process_plugins_install:
+- name: dsf_process_ping_pong
+  version: "1.0.1.0"
+  install_targets:
+  - fdpg
+  - diz
+  - dms
+- name: dsf_process_feasibility
+  version: "1.0.0.5"
+  install_targets:
+  - fdpg
+  - diz
+  process_excluded:
+    fdpg:
+    - "medizininformatik-initiativede_feasibilityExecute|1.0"
+    diz:
+    - "medizininformatik-initiativede_feasibilityRequest|1.0"
+- name: dsf_process_report
+  version: "1.0.0.0"
+  install_targets:
+  - fdpg
+  - diz
+  process_excluded:
+    fdpg:
+    - "medizininformatik-initiativede_reportAutostart|1.0"
+    - "medizininformatik-initiativede_reportSend|1.0"
+    diz:
+    - "medizininformatik-initiativede_reportReceive|1.0"
+- name: dsf_process_report
+  version: "1.1.0.0"
+  install_targets:
+  - fdpg
+  - diz
+  process_excluded:
+    fdpg:
+    - "medizininformatik-initiativede_reportAutostart|1.1"
+    - "medizininformatik-initiativede_reportSend|1.1"
+    diz:
+    - "medizininformatik-initiativede_reportReceive|1.1"
+- name: dsf_process_data_sharing
+  version: "1.0.0.0"
+  install_targets:
+  - fdpg
+  - diz
+  - dms
+  process_excluded:
+    fdpg:
+    - "medizininformatik-initiativede_mergeDataSharing|1.0"
+    - "medizininformatik-initiativede_executeDataSharing|1.0"
+    diz:
+    - "medizininformatik-initiativede_coordinateDataSharing|1.0"
+    - "medizininformatik-initiativede_mergeDataSharing|1.0"
+    dms:
+    - "medizininformatik-initiativede_coordinateDataSharing|1.0"
+    - "medizininformatik-initiativede_executeDataSharing|1.0"
+- name: dsf_process_data_transfer
+  version: "1.0.1.0"
+  install_targets:
+  - diz
+  - dms
+  process_excluded:
+    diz:
+    - "medizininformatik-initiativede_dataReceive|1.0"
+    dms:
+    - "medizininformatik-initiativede_dataSend|1.0"
 additional_keycloak_user:
 - password_file: "{{ storage_path }}/secrets/dev/keycloak/keycloak-user-fdpgplusdev.password"
   username: fdpgplusdev

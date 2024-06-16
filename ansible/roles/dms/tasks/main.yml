@@ -18,8 +18,6 @@
     db_fhir_user_permanent_delete_password_path: "{{ secrets_path }}/db_user_permanent_delete.password"
     dms_public_key_path: "{{ secrets_path }}/dms_public_key.pem"
     dms_private_key_path: "{{ secrets_path }}/dms_private_key.pem"
-    data_sharing_version: "{{ dsf_process_data_sharing_version | regex_replace('^(\\d+\\.\\d+)\\.\\d+\\.\\d+.*$', '\\1') }}"
-    data_transfer_version: "{{ dsf_process_data_transfer_version | regex_replace('^(\\d+\\.\\d+)\\.\\d+\\.\\d+.*$', '\\1') }}"
 
 - name: "DMS - Create folders"
   file:
@@ -77,7 +75,7 @@
     host_file_path: "{{ item.dest }}"
   loop:
   - src:  "secrets/{{ env }}/domain/fdpg.{{ env }}.ffg.de.crt"
-    dest: "{{ secrets_path }}/fdpg.{{ env }}.ffg.de.cer"
+    dest: "{{ secrets_path }}/fdpg.{{ env }}.ffg.de.crt"
   - src:  "secrets/{{ env }}/domain/fdpg.{{ env }}.ffg.de.key"
     dest: "{{ secrets_path }}/fdpg.{{ env }}.ffg.de.key"
   when: not letsencrypt_enabled
@@ -128,25 +126,8 @@
     tasks_from: dsf-bpe-install-plugins
   vars:
     process_plugin_folder_path: "{{ deploy_path }}/bpe/process"
-    process_plugins:
-    - name: ping-pong
-      url: "https://github.com/datasharingframework/dsf-process-ping-pong"
-      version: "{{ dsf_process_ping_pong_version }}"
-      file:
-        basename: "dsf-process-ping-pong"
-        extension: "jar"
-    - name: data-sharing
-      url: "https://github.com/medizininformatik-initiative/mii-process-data-sharing"
-      version: "{{ dsf_process_data_sharing_version }}"
-      file:
-        basename: "mii-process-data-sharing"
-        extension: "jar"
-    - name: data-transfer
-      url: "https://github.com/medizininformatik-initiative/mii-process-data-transfer"
-      version: "{{ dsf_process_data_transfer_version }}"
-      file:
-        basename: "mii-process-data-transfer"
-        extension: "jar"
+    process_plugins: "{{ dsf_process_plugins_install }}"
+    process_scope: 'dms'
 
 - name: DMS - Deploy service files
   template:
@@ -176,9 +157,9 @@
   uri:
     url: "https://{{ dms_dsf_domain }}/fhir/metadata"
     method: GET
-    ca_path: "{{ secrets_path }}/trusted_cas.pem"
-    client_cert: "{{ secrets_path }}/bpe.dms.{{ env }}.ffg.de.crt"
-    client_key: "{{ secrets_path }}/bpe.dms.{{ env }}.ffg.de.key"
+    ca_path: "{{ client_trust_certificates_path }}"
+    client_cert: "{{ client_certificate_path }}"
+    client_key: "{{ client_certificate_private_key_path }}"
   register: _result
   until: _result.status == 200
   retries: 12 # 12 * 10s = 120s
@@ -189,9 +170,9 @@
     remote_src: true
     url: "https://{{ dms_dsf_domain }}/fhir/"
     method: POST
-    ca_path: "{{ secrets_path }}/trusted_cas.pem"
-    client_cert: "{{ secrets_path }}/bpe.dms.{{ env }}.ffg.de.crt"
-    client_key: "{{ secrets_path }}/bpe.dms.{{ env }}.ffg.de.key"
+    ca_path: "{{ client_trust_certificates_path }}"
+    client_cert: "{{ client_certificate_path }}"
+    client_key: "{{ client_certificate_private_key_path }}"
     headers:
       Content-Type: application/fhir+xml
     src: "{{ deploy_path }}/allowlist.xml"

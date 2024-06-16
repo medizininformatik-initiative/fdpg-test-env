@@ -70,31 +70,8 @@
       tasks_from: dsf-bpe-install-plugins
     vars:
       process_plugin_folder_path: "{{ project_path }}/process"
-      process_plugins:
-      - name: ping-pong
-        url: "https://github.com/datasharingframework/dsf-process-ping-pong"
-        version: "{{ dsf_process_ping_pong_version }}"
-        file:
-          basename: "dsf-process-ping-pong"
-          extension: "jar"
-      - name: feasibility
-        url: "https://github.com/medizininformatik-initiative/mii-process-feasibility"
-        version: "{{ dsf_process_feasibility_version }}"
-        file:
-          basename: "feasibility-dsf-process"
-          extension: "jar"
-      - name: report
-        url: "https://github.com/medizininformatik-initiative/mii-process-report"
-        version: "{{ dsf_process_report_version }}"
-        file:
-          basename: "mii-process-report"
-          extension: "jar"
-      - name: data-sharing
-        url: "https://github.com/medizininformatik-initiative/mii-process-data-sharing"
-        version: "{{ dsf_process_data_sharing_version }}"
-        file:
-          basename: "mii-process-data-sharing"
-          extension: "jar"
+      process_plugins: "{{ dsf_process_plugins_install }}"
+      process_scope: 'fdpg'
 
   - name: FDPG DSF - Get environment config stats
     stat:
@@ -126,10 +103,6 @@
       dest: "{{ project_path }}/fhir.env.default"
     - src: allowlist.xml.j2
       dest: "{{ project_path }}/allowlist.xml"
-    vars:
-      dsf_process_report_version_number: "{{ dsf_process_report_version | regex_replace('^(\\d+\\.\\d+)\\.\\d+\\.\\d+.*$', '\\1') }}"
-      dsf_process_data_sharing_version_number: "{{ dsf_process_data_sharing_version | regex_replace('^(\\d+\\.\\d+)\\.\\d+\\.\\d+.*$', '\\1') }}"
-      dsf_process_feasibility_version_number: "{{ dsf_process_feasibility_version | regex_replace('^(\\d+\\.\\d+)\\.\\d+\\.\\d+.*$', '\\1') }}"
 
   - name: FDPG DSF - Copy DB init script
     copy:
@@ -163,18 +136,3 @@
     retries: 12 # 12 * 10s = 120s
     delay: 10 # Every 5 seconds
 
-  - name: DSF FHIR - Upload Allow List
-    uri:
-      remote_src: true
-      url: "https://{{ fdpg_portal_dsf_domain }}/fhir/"
-      method: POST
-      ca_path: "{{ secrets_path }}/trusted_cas.pem"
-      client_cert: "{{ secrets_path }}/bpe.fdpg.{{ env }}.ffg.de.crt"
-      client_key: "{{ secrets_path }}/bpe.fdpg.{{ env }}.ffg.de.key"
-      headers:
-        Content-Type: application/fhir+xml
-      src: "{{ project_path }}/allowlist.xml"
-      timeout: 60
-      status_code:
-      - 200
-      - 201
