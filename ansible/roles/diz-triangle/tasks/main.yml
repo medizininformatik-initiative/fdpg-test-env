@@ -1,33 +1,43 @@
 ---
 # tasks file for diz
-- name: Checkout FDPG Deployment
+- name: DIZ Triangle - Checkout FDPG Deployment
   include_role:
     name: common
     tasks_from: checkout-deploy-repo
   vars:
-    feasibility_deploy_version: readd-dsf
+    feasibility_deploy_version: "{{ deploy_version }}"
+  tags: common
 
-- name: Deploy FHIR server
+- name: DIZ Triangle - Extract DIZ instance from hostname
+  set_fact:
+    diz_instance: "{{ inventory_hostname | regex_replace('^.*-diz-(\\d+)-.*$', '\\1') }}"
+  failed_when: inventory_hostname is not regex('^.*-diz-\d+-.*$')
+
+- name: DIZ Triangle - Deploy FHIR server
   include_tasks: fhir-server.yml
   vars:
-    fhir_server_path: "{{ deploy_path }}/feasibility-triangle/fhir-server"
+    project_path: "{{ deploy_path }}/feasibility-triangle/fhir-server"
     project_name: triangle
+  tags: fhir
 
-- name: Deploy flare
+- name: DIZ Triangle - Deploy flare
   include_tasks: flare.yml
   vars:
-    flare_path: "{{ deploy_path }}/feasibility-triangle/flare"
+    project_path: "{{ deploy_path }}/feasibility-triangle/flare"
     project_name: triangle
+  tags: flare
 
-- name: Deploy reverse proxy
+- name: DIZ Triangle - Deploy reverse proxy
   include_tasks: rev-proxy.yml
   vars:
-    rev_proxy_path: "{{ deploy_path }}/feasibility-triangle/rev-proxy"
+    project_path: "{{ deploy_path }}/feasibility-triangle/rev-proxy"
     project_name: triangle
+  tags: proxy
 
-- name: Deploy aktin client
+- name: DIZ Triangle - Deploy aktin client
   include_tasks: aktin-client.yml
   vars:
-    aktin_client_path: "{{ deploy_path }}/feasibility-triangle/aktin-client"
+    project_path: "{{ deploy_path }}/feasibility-triangle/aktin-client"
     project_name: triangle
   when: aktin is defined and aktin == "true"
+  tags: aktin

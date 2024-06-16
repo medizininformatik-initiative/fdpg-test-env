@@ -1,75 +1,76 @@
-- name: Reverse Proxy - Upload Certificate
-  include_role:
-    name: common
-    tasks_from: get-storage-file
-  vars:
-    storage_file_path: "{{ item.src }}"
-    host_file_path: "{{ item.dest }}"
-  loop:
-  - src:  "secrets/domain/{{ inventory_hostname }}.local.cer"
-    dest: "{{ secrets_path }}/{{ inventory_hostname }}.local.cer"
-  - src:  "secrets/domain/{{ inventory_hostname }}.local.key"
-    dest: "{{ secrets_path }}/{{ inventory_hostname }}.local.key"
-  - src:  "secrets/domain/{{ inventory_hostname }}.local.htpasswd"
-    dest: "{{ secrets_path }}/{{ inventory_hostname }}.local.htpasswd"
-  - src:  "secrets/domain/root-ca.local.pem"
-    dest: "{{ secrets_path }}/root-ca.local.pem"
+- name: Reverse Proxy
+  tags: proxy
+  block:
+  - name: Reverse Proxy - Upload Certificate
+    include_role:
+      name: common
+      tasks_from: get-storage-file
+    vars:
+      storage_file_path: "{{ item.src }}"
+      host_file_path: "{{ item.dest }}"
+    loop:
+    - src:  "secrets/{{ env }}/domain/diz-{{ diz_instance }}-triangle.local.crt"
+      dest: "{{ secrets_path }}/diz-{{ diz_instance }}-triangle.local.crt"
+    - src:  "secrets/{{ env }}/domain/diz-{{ diz_instance }}-triangle.local.key"
+      dest: "{{ secrets_path }}/diz-{{ diz_instance }}-triangle.local.key"
+    - src:  "secrets/{{ env }}/domain/diz-{{ diz_instance }}-triangle.local.htpasswd"
+      dest: "{{ secrets_path }}/diz-{{ diz_instance }}-triangle.local.htpasswd"
+    - src:  "secrets/{{ env }}/domain/root-ca.local.crt"
+      dest: "{{ secrets_path }}/root-ca.local.crt"
 
-- name: Reverse Proxy - Get environment config stats
-  stat:
-    path: "{{ rev_proxy_path }}/.env"
-  register: rev_proxy_env
+  - name: Reverse Proxy - Get environment config stats
+    stat:
+      path: "{{ project_path }}/.env"
+    register: rev_proxy_env
 
-- name: Reverse Proxy - Get Keycloak default environment config stats
-  stat:
-    path: "{{ rev_proxy_path }}/.env.default"
-  register: rev_proxy_env_default
+  - name: Reverse Proxy - Get default environment config stats
+    stat:
+      path: "{{ project_path }}/.env.default"
+    register: rev_proxy_env_default
 
-- name: Reverse Proxy - Copy Keycloak default environment config
-  copy:
-    src: "{{ rev_proxy_path }}/.env.default"
-    dest: "{{ rev_proxy_path }}/.env"
-    owner: ubuntu
-    group: ubuntu
-    mode: u+rw,g-wx,o-rwx
-    remote_src: true
-  when: rev_proxy_env.stat.exists == false or rev_proxy_env.stat.ctime < rev_proxy_env_default.stat.ctime
+  - name: Reverse Proxy - Copy default environment config
+    copy:
+      src: "{{ project_path }}/.env.default"
+      dest: "{{ project_path }}/.env"
+      owner: ubuntu
+      group: ubuntu
+      mode: u+rw,g-wx,o-rwx
+      remote_src: true
+    when: rev_proxy_env.stat.exists == false or rev_proxy_env.stat.ctime < rev_proxy_env_default.stat.ctime
 
-- name: Reverse Proxy - Setup evnironment variables
-  include_role:
-    name: common
-    tasks_from: set-env
-  vars:
-    path: "{{ rev_proxy_path }}/.env"
-    variables:
-    - name: FEASIBILITY_TRIANGLE_REV_PROXY_PORT
-      value: "443"
-    - name: FEASIBILITY_TRIANGLE_REV_PROXY_CERTIFICATE_FILE
-      value: "{{ secrets_path }}/{{ inventory_hostname }}.local.cer"
-    - name: FEASIBILITY_TRIANGLE_REV_PROXY_CERTIFICATE_PRIVATE_KEY_FILE
-      value: "{{ secrets_path }}/{{ inventory_hostname }}.local.key"
-    - name: FEASIBILITY_TRIANGLE_REV_PROXY_HTTP_PASSWORD_FILE
-      value: "{{ secrets_path }}/{{ inventory_hostname }}.local.htpasswd"
+  - name: Reverse Proxy - Setup evnironment variables
+    include_role:
+      name: common
+      tasks_from: set-env
+    vars:
+      path: "{{ project_path }}/.env"
+      variables:
+      - name: FEASIBILITY_TRIANGLE_REV_PROXY_PORT
+        value: "443"
+      - name: FEASIBILITY_TRIANGLE_REV_PROXY_CERTIFICATE_FILE
+        value: "{{ secrets_path }}/diz-{{ diz_instance }}-triangle.local.crt"
+      - name: FEASIBILITY_TRIANGLE_REV_PROXY_CERTIFICATE_PRIVATE_KEY_FILE
+        value: "{{ secrets_path }}/diz-{{ diz_instance }}-triangle.local.key"
+      - name: FEASIBILITY_TRIANGLE_REV_PROXY_HTTP_PASSWORD_FILE
+        value: "{{ secrets_path }}/diz-{{ diz_instance }}-triangle.local.htpasswd"
 
-- name: Reverse Proxy - Add self signed ca certificate
-  lineinfile:
-    path: "{{ item.path }}"
-    insertafter: "{{ item.insertafter }}"
-    line: "{{ item.line }}"
-  loop:
-  - path: "{{ rev_proxy_path }}/docker-compose.yml"
-    insertafter: '^    volumes:'
-    line: "      - {{ secrets_path }}/root-ca.local.pem:/etc/nginx/conf.d/ca.pem"
-  - path: "{{ rev_proxy_path }}/nginx.conf"
-    insertafter: '^\s*# SSL-Certificate and private key'
-    line: "        ssl_trusted_certificate /etc/nginx/conf.d/ca.pem;"
+  - name: Reverse Proxy - Add self signed ca certificate
+    lineinfile:
+      path: "{{ item.path }}"
+      insertafter: "{{ item.insertafter }}"
+      line: "{{ item.line }}"
+    loop:
+    - path: "{{ project_path }}/docker-compose.yml"
+      insertafter: '^    volumes:'
+      line: "      - {{ secrets_path }}/root-ca.local.crt:/etc/nginx/conf.d/ca.pem"
+    - path: "{{ project_path }}/nginx.conf"
+      insertafter: '^\s*# SSL-Certificate and private key'
+      line: "        ssl_trusted_certificate /etc/nginx/conf.d/ca.pem;"
 
-- name: Reverse Proxy - Start container
-  community.docker.docker_compose:
-    project_src: "{{ rev_proxy_path }}"
-    project_name: "{{ project_name }}"
-    files:
-    - docker-compose.yml
-    restarted: true
-  environment:
-    COMPOSE_IGNORE_ORPHANS: "1"
+  - name: Reverse Proxy - Start container
+    community.docker.docker_compose_v2:
+      project_src: "{{ project_path }}"
+      project_name: "{{ project_name }}"
+      recreate: "always"
+    environment:
+      COMPOSE_IGNORE_ORPHANS: "1"

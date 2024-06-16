@@ -1,5 +1,5 @@
 resource "hcloud_firewall" "dms" {
-  name = "dms-dmz"
+  name = terraform.workspace == "default" ? "dms-dmz" : format("%s-dms-dmz", terraform.workspace)
   rule {
     direction  = "in"
     protocol   = "tcp"
@@ -32,7 +32,7 @@ resource "hcloud_firewall" "dms" {
 }
 
 resource "hcloud_primary_ip" "dsf_fhir" {
-  name          = "dms-dsf-fhir"
+  name          = terraform.workspace == "default" ? "dms-dsf-fhir" : format("%s-dms-dsf-fhir", terraform.workspace)
   type          = "ipv4"
   datacenter    = "fsn1-dc14"
   assignee_type = "server"
@@ -40,7 +40,7 @@ resource "hcloud_primary_ip" "dsf_fhir" {
 }
 
 resource "hcloud_server" "dsf_fhir" {
-  name         = "dms-dsf-fhir"
+  name         = terraform.workspace == "default" ? "dms-dsf-fhir" : format("%s-dms-dsf-fhir", terraform.workspace)
   image        = "ubuntu-22.04"
   server_type  = "cx41"
   datacenter   = "fsn1-dc14"

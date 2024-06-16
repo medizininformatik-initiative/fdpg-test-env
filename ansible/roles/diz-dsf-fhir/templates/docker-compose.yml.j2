@@ -1,0 +1,98 @@
+services:
+
+  db:
+    image: postgres:15
+    restart: on-failure
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U liquibase_user -d fhir"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    volumes:
+    - type: volume
+      source: db-data
+      target: /var/lib/postgresql/data
+    environment:
+      TZ: Europe/Berlin
+      POSTGRES_PASSWORD_FILE: /run/secrets/db_liquibase.password
+      POSTGRES_USER: liquibase_user
+      POSTGRES_DB: fhir
+    secrets:
+    - db_liquibase.password
+
+  fhir-app:
+    image: ghcr.io/datasharingframework/fhir:{{ dsf_version }}
+    healthcheck:
+      test: [ "CMD-SHELL", "./healthcheck.sh" ]
+      interval: 10s
+      timeout: 15s
+      retries: 5
+    restart: on-failure
+    secrets:
+    - db_liquibase.password
+    - db_user.password
+    - db_user_permanent_delete.password
+    - app_client_trust_certificates.pem
+    - app_client_certificate.pem
+    - app_client_certificate_private_key.pem
+    - ssl_ca_certificate_file.pem
+    volumes:
+    - type: bind
+      source: {{ project_path }}/log
+      target: /opt/fhir/log
+    env_file:
+    - path: ./fhir.env.default
+    - path: ./fhir.env
+      required: false
+    environment:
+      DEV_DSF_SERVER_AUTH_TRUST_CLIENT_CERTIFICATE_CAS:  /run/secrets/ssl_ca_certificate_file.pem
+      DEV_DSF_FHIR_DB_LIQUIBASE_PASSWORD_FILE: /run/secrets/db_liquibase.password
+      DEV_DSF_FHIR_DB_USER_PASSWORD_FILE: /run/secrets/db_user.password
+      DEV_DSF_FHIR_DB_USER_PERMANENT_DELETE_PASSWORD_FILE: /run/secrets/db_user_permanent_delete.password
+      DEV_DSF_FHIR_CLIENT_TRUST_SERVER_CERTIFICATE_CAS: /run/secrets/app_client_trust_certificates.pem
+      DEV_DSF_FHIR_CLIENT_CERTIFICATE: /run/secrets/app_client_certificate.pem
+      DEV_DSF_FHIR_CLIENT_CERTIFICATE_PRIVATE_KEY: /run/secrets/app_client_certificate_private_key.pem
+    depends_on:
+    - db
+
+  proxy:
+    image: 'nginxinc/nginx-unprivileged:1.25.4-alpine'
+    ports:
+    - "443:8443"
+    secrets:
+    - ssl_certificate_file.pem
+    - ssl_private_key_file.pem
+    - ssl_ca_certificate_file.pem
+    volumes:
+    - type: bind
+      source: "{{ project_path }}/nginx.conf"
+      target: "/etc/nginx/nginx.conf"
+      read_only: true
+    depends_on:
+    - fhir-app
+
+volumes:
+  db-data:
+    name: diz-{{ diz_instance }}-fhir-db-data
+
+secrets:
+  db_liquibase.password:
+    file: {{ secrets_path }}/db_liquibase.password
+  db_user.password:
+    file: {{ secrets_path }}/db_user.password
+  db_user_permanent_delete.password:
+    file: {{ secrets_path }}/db_user_permanent_delete.password
+
+  app_client_trust_certificates.pem:
+    file: {{ secrets_path }}/trusted_cas.pem
+  app_client_certificate.pem:
+    file: {{ secrets_path }}/bpe.diz-{{ diz_instance }}.{{ env }}.ffg.de.crt
+  app_client_certificate_private_key.pem:
+    file: {{ secrets_path }}/bpe.diz-{{ diz_instance }}.{{ env }}.ffg.de.key
+
+  ssl_certificate_file.pem:
+    file: {{ certificate_path }}
+  ssl_private_key_file.pem:
+    file: {{ private_key_path }}
+  ssl_ca_certificate_file.pem:
+    file: {{ secrets_path }}/trusted_cas.pem

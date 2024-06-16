@@ -1,0 +1,28 @@
+---
+# variables for all hosts
+env: dev
+deploy_version: "develop"
+fdpg_portal_domain: datenportal.dev.forschen-fuer-gesundheit.de
+fdpg_portal_aktin_domain: aktin.datenportal.dev.forschen-fuer-gesundheit.de
+fdpg_portal_dsf_domain: dsf.datenportal.dev.forschen-fuer-gesundheit.de
+fdpg_auth_domain: auth.dev.forschen-fuer-gesundheit.de
+diz_1_dsf_domain: dsf.diz-1.dev.forschen-fuer-gesundheit.de
+diz_2_dsf_domain: dsf.diz-2.dev.forschen-fuer-gesundheit.de
+dms_dsf_domain: dsf.dms.dev.forschen-fuer-gesundheit.de
+fdpg_portal_dsf_organization_identifier: forschen-fuer-gesundheit.de
+diz_1_dsf_organization_identifier: diz-1.dev.forschen-fuer-gesundheit.de
+diz_2_dsf_organization_identifier: diz-2.dev.forschen-fuer-gesundheit.de
+dms_dsf_organization_identifier: dms.dev.forschen-fuer-gesundheit.de
+letsencrypt_enabled: true
+dsf_version: "1.5.0"
+dsf_process_ping_pong_version: "1.0.1.0"
+dsf_process_feasibility_version: "1.0.0.4"
+dsf_process_report_version: "1.0.0.0"
+dsf_process_data_sharing_version: "1.0.0.0-RC1"
+dsf_process_data_transfer_version: "1.0.0.0-RC2"
+feasibility_evaluation_obfuscate: false
+additional_keycloak_user:
+- password_file: "{{ storage_path }}/secrets/dev/keycloak/keycloak-user-fdpgplusdev.password"
+  username: fdpgplusdev
+  first_name: Developer
+  last_name: FDPG+

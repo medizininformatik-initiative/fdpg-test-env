@@ -1,73 +1,72 @@
-- name: Aktin Client - Upload Certificate
-  include_role:
-    name: common
-    tasks_from: get-storage-file
-  vars:
-    storage_file_path: "{{ item.src }}"
-    host_file_path: "{{ item.dest }}"
-  loop:
-  - src:  "secrets/aktin/{{ inventory_hostname }}.api.key"
-    dest: "{{ secrets_path }}/{{ inventory_hostname }}.api.key"
-  - src:  "secrets/domain/{{ inventory_hostname }}.local.key"
-    dest: "{{ secrets_path }}/{{ inventory_hostname }}.local.key"
-  - src:  "secrets/aktin/aktin-client-truststore.p12"
-    dest: "{{ secrets_path }}/aktin-client-truststore.p12"
+- name: Aktin Client
+  tags: aktin
+  block:
+  - name: Aktin Client - Upload Certificate
+    include_role:
+      name: common
+      tasks_from: get-storage-file
+    vars:
+      storage_file_path: "{{ item.src }}"
+      host_file_path: "{{ item.dest }}"
+    loop:
+    - src:  "secrets/{{ env }}/aktin/diz-{{ diz_instance }}-aktin.api.key"
+      dest: "{{ secrets_path }}/diz-{{ diz_instance }}-aktin.api.key"
+    - src:  "secrets/{{ env }}/aktin/aktin-client-truststore.p12"
+      dest: "{{ secrets_path }}/aktin-client-truststore.p12"
 
-- name: Aktin Client - Read API key
-  slurp:
-    src: "{{ secrets_path }}/{{ inventory_hostname }}.api.key"
-  register: api_key
+  - name: Aktin Client - Read API key
+    slurp:
+      src: "{{ secrets_path }}/diz-{{ diz_instance }}-aktin.api.key"
+    register: api_key
 
-- name: Aktin Client - Get environment config stats
-  stat:
-    path: "{{ aktin_client_path }}/.env"
-  register: aktin_client_env
+  - name: Aktin Client - Get environment config stats
+    stat:
+      path: "{{ project_path }}/.env"
+    register: aktin_client_env
 
-- name: Aktin Client - Get Keycloak default environment config stats
-  stat:
-    path: "{{ aktin_client_path }}/.env.default"
-  register: aktin_client_env_default
+  - name: Aktin Client - Get default environment config stats
+    stat:
+      path: "{{ project_path }}/.env.default"
+    register: aktin_client_env_default
 
-- name: Aktin Client - Copy Keycloak default environment config
-  copy:
-    src: "{{ aktin_client_path }}/.env.default"
-    dest: "{{ aktin_client_path }}/.env"
-    owner: ubuntu
-    group: ubuntu
-    mode: u+rw,g-wx,o-rwx
-    remote_src: true
-  when: aktin_client_env.stat.exists == false or aktin_client_env.stat.ctime < aktin_client_env_default.stat.ctime
+  - name: Aktin Client - Copy default environment config
+    copy:
+      src: "{{ project_path }}/.env.default"
+      dest: "{{ project_path }}/.env"
+      owner: ubuntu
+      group: ubuntu
+      mode: u+rw,g-wx,o-rwx
+      remote_src: true
+    when: aktin_client_env.stat.exists == false or aktin_client_env.stat.ctime < aktin_client_env_default.stat.ctime
 
-- name: Aktin Client - Setup evnironment variables
-  include_role:
-    name: common
-    tasks_from: set-env
-  vars:
-    path: "{{ aktin_client_path }}/.env"
-    variables:
-    - name: FEASIBILITY_AKTIN_CLIENT_AUTH_PARAM
-      value: "{{ api_key.content | b64decode  | trim }}"
-    - name: FEASIBILITY_AKTIN_CLIENT_BROKER_ENDPOINT_URI
-      value: "https://{{ fdpg_portal_aktin_domain }}/broker/"
-    - name: FEASIBILITY_AKTIN_JAVA_OPTS
-      value: '-Djavax.net.ssl.trustStore=/run/secrets/aktin-client-truststore.p12 -Djavax.net.ssl.trustStorePassword=password'
+  - name: Aktin Client - Setup evnironment variables
+    include_role:
+      name: common
+      tasks_from: set-env
+    vars:
+      path: "{{ project_path }}/.env"
+      variables:
+      - name: FEASIBILITY_AKTIN_CLIENT_AUTH_PARAM
+        value: "{{ api_key.content | b64decode  | trim }}"
+      - name: FEASIBILITY_AKTIN_CLIENT_BROKER_ENDPOINT_URI
+        value: "https://{{ fdpg_portal_aktin_domain }}/broker/"
+      - name: FEASIBILITY_AKTIN_JAVA_OPTS
+        value: '-Djavax.net.ssl.trustStore=/run/secrets/aktin-client-truststore.p12 -Djavax.net.ssl.trustStorePassword=password'
 
-- name: Aktin Client - Mount trust store in container
-  blockinfile:
-    path: "{{ aktin_client_path }}/docker-compose.yml"
-    block: |
-      # custom trust store with ca for aktin.fdpg.test.forschen-fuer-gesundheit.de
-          secrets:
-          - aktin-client-truststore.p12
-      secrets:
-        aktin-client-truststore.p12:
-          file: {{ secrets_path }}/aktin-client-truststore.p12
+  - name: Aktin Client - Mount trust store in container
+    blockinfile:
+      path: "{{ project_path }}/docker-compose.yml"
+      block: |
+        # custom trust store with ca for {{ fdpg_portal_aktin_domain }}
+            secrets:
+            - aktin-client-truststore.p12
+        secrets:
+          aktin-client-truststore.p12:
+            file: {{ secrets_path }}/aktin-client-truststore.p12
 
-- name: Aktin Client - Start container
-  community.docker.docker_compose:
-    project_src: "{{ aktin_client_path }}"
-    project_name: "{{ project_name }}"
-    files:
-    - docker-compose.yml
-  environment:
-    COMPOSE_IGNORE_ORPHANS: "1"
+  - name: Aktin Client - Start container
+    community.docker.docker_compose_v2:
+      project_src: "{{ project_path }}"
+      project_name: "{{ project_name }}"
+    environment:
+      COMPOSE_IGNORE_ORPHANS: "1"

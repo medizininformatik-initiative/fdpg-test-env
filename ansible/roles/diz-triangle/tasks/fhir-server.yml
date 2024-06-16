@@ -1,29 +1,67 @@
 ---
-- name: FHIR Server - Get environment config stats
-  stat:
-    path: "{{ fhir_server_path }}/.env"
-  register: fhir_env
 
-- name: FHIR Server - Get Keycloak default environment config stats
-  stat:
-    path: "{{ fhir_server_path }}/.env.default"
-  register: fhir_env_default
+- name: FHIR Server
+  tags: fhir
+  block:
+  - name: FHIR Server - Install required packages
+    apt:
+      name:
+      - zip
+      state: present
+      update_cache: yes
 
-- name: FHIR Server - Copy Keycloak default environment config
-  copy:
-    src: "{{ fhir_server_path }}/.env.default"
-    dest: "{{ fhir_server_path }}/.env"
-    owner: ubuntu
-    group: ubuntu
-    mode: u+rw,g-wx,o-rwx
-    remote_src: true
-  when: fhir_env.stat.exists == false or fhir_env.stat.ctime < fhir_env_default.stat.ctime
+  - name: FHIR Server - Get environment config stats
+    stat:
+      path: "{{ project_path }}/.env"
+    register: fhir_env
 
-- name: FHIR Server - Start container
-  community.docker.docker_compose:
-    project_src: "{{ fhir_server_path }}"
-    project_name: "{{ project_name }}"
-    files:
-    - docker-compose.yml
-  environment:
-    COMPOSE_IGNORE_ORPHANS: "1"
+  - name: FHIR Server - Get default environment config stats
+    stat:
+      path: "{{ project_path }}/.env.default"
+    register: fhir_env_default
+
+  - name: FHIR Server - Copy default environment config
+    copy:
+      src: "{{ project_path }}/.env.default"
+      dest: "{{ project_path }}/.env"
+      owner: ubuntu
+      group: ubuntu
+      mode: u+rw,g-wx,o-rwx
+      remote_src: true
+    when: fhir_env.stat.exists == false or fhir_env.stat.ctime < fhir_env_default.stat.ctime
+
+  - name: FHIR Server - Setup evnironment variables
+    include_role:
+      name: common
+      tasks_from: set-env
+    vars:
+      path: "{{ project_path }}/.env"
+      variables:
+      - name: PORT_FHIR_SERVER_LOCALHOST
+        value: "127.0.0.1:8081"
+
+  - name: FHIR Server - Start container
+    community.docker.docker_compose_v2:
+      project_src: "{{ project_path }}"
+      project_name: "{{ project_name }}"
+    environment:
+      COMPOSE_IGNORE_ORPHANS: "1"
+
+  - name: DSF FHIR - Get patient count
+    uri:
+      remote_src: true
+      url: http://localhost:8081/fhir/Patient?_count=1
+      method: GET
+      headers:
+        Accept: application/fhir+json
+      timeout: 10
+    register: patient_count
+    failed_when: patient_count.status != 200 or patient_count.json is undefined
+
+  - name: DSF FHIR - Upload test data
+    shell:
+      cmd: |
+        ./get-mii-testdata.sh
+        ./upload-testdata.sh
+      chdir: "{{ project_path }}/.."
+    when: patient_count.json and patient_count.json.total == 0

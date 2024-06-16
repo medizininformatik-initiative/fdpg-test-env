@@ -4,7 +4,7 @@
     url: https://{{ fdpg_auth_domain }}/realms/master/protocol/openid-connect/token
     method: POST
     validate_certs: false
-    body: "username=admin&password={{ lookup('file', '{{ playbook_dir }}/secrets/keycloak_admin_pw') }}&grant_type=password&client_id=admin-cli"
+    body: "username=admin&password={{ admin_password }}&grant_type=password&client_id=admin-cli"
     status_code: 200
     headers:
       Content-Type: "application/x-www-form-urlencoded"

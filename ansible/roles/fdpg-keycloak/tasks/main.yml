@@ -5,9 +5,9 @@
     name: common
     tasks_from: checkout-deploy-repo
   vars:
-    feasibility_deploy_version: readd-dsf
+    feasibility_deploy_version: "{{ deploy_version }}"
 
-- name: Get Certifcate and Private key
+- name: Get Certificate and Key from Storage
   include_role:
     name: common
     tasks_from: get-storage-file
@@ -15,16 +15,29 @@
     storage_file_path: "{{ item.src }}"
     host_file_path: "{{ item.dest }}"
   loop:
-  - src:  "secrets/domain/test.ffg.de.cer"
-    dest: "{{ secrets_path }}/fdpg.test.ffg.de.cer"
-  - src:  "secrets/domain/test.ffg.de.key"
-    dest: "{{ secrets_path }}/fdpg.test.ffg.de.key"
-  - src:  "secrets/keycloak/keycloak-db.password"
-    dest: "{{ secrets_path }}/keycloak-db.password"
-  - src:  "secrets/keycloak/keycloak-admin.password"
-    dest: "{{ secrets_path }}/keycloak-admin.password"
-  - src:  "secrets/keycloak/keycloak-user-test.password"
-    dest: "{{ secrets_path }}/keycloak-user-test.password"
+  - src:  "secrets/{{ env }}/domain/fdpg.{{ env }}.ffg.de.crt"
+    dest: "{{ secrets_path }}/fdpg.{{ env }}.ffg.de.crt"
+  - src:  "secrets/{{ env }}/domain/fdpg.{{ env }}.ffg.de.key"
+    dest: "{{ secrets_path }}/fdpg.{{ env }}.ffg.de.key"
+  when: not letsencrypt_enabled
+
+- name: Set Certificate and Key Path Variables
+  set_fact:
+    certificate_path: "{{ secrets_path }}/fdpg.{{ env }}.ffg.de.crt"
+    private_key_path: "{{ secrets_path }}/fdpg.{{ env }}.ffg.de.key"
+  when: not letsencrypt_enabled
+
+- name: Get Certificate and Key from LetsEncrypt
+  include_role:
+    name: common
+    tasks_from: certbot
+  vars:
+    certbot_register_email: info@tmf-ev.de
+    certbot_register_domain: "{{ fdpg_auth_domain }}"
+    certificates_path: "{{ secrets_path }}/letsencrypt"
+    certbot_user_id: 101
+    certbot_group_id: 101
+  when: letsencrypt_enabled
 
 - name: Get Keycloak environment config stats
   stat:
@@ -47,21 +60,10 @@
   when: keycloak_env.stat.exists == false or keycloak_env.stat.ctime < keycloak_env_default.stat.ctime
 
 - name: Keycloak - Read database password
-  slurp:
-    src: "{{ secrets_path }}/keycloak-db.password"
-  register: keycloak_db_pw
-  changed_when: false
-
-- name: Keycloak - Read admin password
-  slurp:
-    src: "{{ secrets_path }}/keycloak-admin.password"
-  register: keycloak_admin_pw
-  changed_when: false
-
-- name: Keycloak - Read user "test" password
-  slurp:
-    src: "{{ secrets_path }}/keycloak-user-test.password"
-  register: keycloak_user_test_pw
+  set_fact:
+    kc_db_password: "{{ lookup('file', storage_path + '/secrets/' + env + '/keycloak/keycloak-db.password') }}"
+    kc_admin_password: "{{ lookup('file', storage_path + '/secrets/' + env + '/keycloak/keycloak-admin.password') }}"
+    kc_test_user_password: "{{ lookup('file', storage_path + '/secrets/' + env + '/keycloak/keycloak-user-test.password') }}"
   changed_when: false
 
 - name: Setup Keycloak
@@ -71,9 +73,9 @@
     line: "{{ item.line }}"
   loop:
   - regexp: '^FEASIBILITY_KC_DB_PW='
-    line:    "FEASIBILITY_KC_DB_PW={{ keycloak_db_pw }}"
+    line:    "FEASIBILITY_KC_DB_PW={{ kc_db_password }}"
   - regexp: '^FEASIBILITY_KC_ADMIN_PW='
-    line:    "FEASIBILITY_KC_ADMIN_PW={{ keycloak_admin_pw }}"
+    line:    "FEASIBILITY_KC_ADMIN_PW={{ kc_admin_password }}"
   - regexp: '^FEASIBILITY_KC_HTTP_RELATIVE_PATH='
     line:    "FEASIBILITY_KC_HTTP_RELATIVE_PATH=/"
   - regexp: '^FEASIBILITY_KC_HOSTNAME_URL='
@@ -88,7 +90,8 @@
     replace: "https://{{ fdpg_portal_domain }}"
 
 - name: Start Keycloak Service
-  community.docker.docker_compose:
+  community.docker.docker_compose_v2:
+    project_name: keycloak
     project_src: "{{ deploy_path }}/feasibility-portal/keycloak"
     files:
     - docker-compose.yml
@@ -96,38 +99,30 @@
 
 - name: Get keycloak network name
   set_fact:
-    keycloak_network: "{{ keycloak_docker.services.auth[(keycloak_docker.services.auth.keys() | first)].networks.keys() | first }}"
+    keycloak_network: "{{ keycloak_docker.containers[lookup('ansible.utils.index_of', keycloak_docker.containers, 'eq', 'auth', 'Service')].Networks | first }}"
 
-- name: Copy NGINX configuration
+- name: Copy Proxy configuration
   template:
     src: nginx.conf.j2
-    dest: /home/ubuntu/deploy/nginx.conf
+    dest: "{{ deploy_path }}/nginx.conf"
     owner: ubuntu
     group: ubuntu
     mode: u=rw,g=r,o=r
 
-- name: ReStart NGINX
-  docker_compose:
-    project_name: proxy
-    definition:
-      version: '3'
-      services:
-        nginx:
-          image: 'nginx:1.25.1'
-          networks:
-          - keycloak_network
-          ports:
-          - "443:8443"
-          volumes:
-          - "{{ secrets_path }}/fdpg.test.ffg.de.cer:/etc/nginx/cert.pem:ro"
-          - "{{ secrets_path }}/fdpg.test.ffg.de.key:/etc/nginx/pkey.pem:ro"
-          - "{{ secrets_path }}/trusted_ca.pem:/etc/nginx/trusted.pem:ro"
-          - /home/ubuntu/deploy/nginx.conf:/etc/nginx/nginx.conf:ro
-      networks:
-        keycloak_network:
-          name: "{{ keycloak_network }}"
-          external: true
-    restarted: true
+- name: Copy Proxy docker-compose.yml
+  template:
+    src: proxy-docker-compose.yml
+    dest: "{{ deploy_path }}/proxy-docker-compose.yml"
+    owner: ubuntu
+    group: ubuntu
+    mode: u=rw,g=r,o=r
+
+- name: Start Proxy
+  community.docker.docker_compose_v2:
+    project_name: keycloak
+    project_src: "{{ deploy_path }}"
+    files:
+    - proxy-docker-compose.yml
 
 - name: Wait for Keycloak
   uri:
@@ -143,11 +138,31 @@
 - name: Create Test User
   include_tasks: create-user.yml
   vars:
+    admin_password: "{{ kc_admin_password }}"
     username: "test"
     first_name: "User"
     last_name: "Test"
     email: "foo@bar.baz"
-    password: "{{ keycloak_user_test_pw }}"
+    password_file: "{{ kc_test_user_password }}"
     roles:
     - name: "FeasibilityUser"
       id: "51cb7b69-d269-4872-b832-2d326e2e8658"
+
+- name: Create Additional Users
+  include_tasks: create-user.yml
+  vars:
+    admin_password: "{{ kc_admin_password }}"
+    username: "{{ kc_user.username }}"
+    first_name: "{{ kc_user.first_name }}"
+    last_name: "{{ kc_user.last_name }}"
+    email: "{{ kc_user.username }}@bar.baz"
+    password: "{{ lookup('file', kc_user.password_file) }}"
+    roles:
+    - name: "FeasibilityUser"
+      id: "51cb7b69-d269-4872-b832-2d326e2e8658"
+  loop: "{{ additional_keycloak_user }}"
+  loop_control:
+    loop_var: kc_user
+  when: additional_keycloak_user is iterable
+
+

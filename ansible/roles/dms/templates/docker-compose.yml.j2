@@ -59,8 +59,11 @@ services:
     - type: bind
       source: "{{ fhir_log_path }}"
       target: /opt/fhir/log
+    env_file:
+    - path: fhir.env.default
+    - path: fhir.env
+      required: false
     environment:
-      TZ: Europe/Berlin
       DEV_DSF_SERVER_AUTH_TRUST_CLIENT_CERTIFICATE_CAS: /run/secrets/client_trust_certificates.pem
       DEV_DSF_FHIR_DB_LIQUIBASE_PASSWORD_FILE: /run/secrets/db_liquibase.password
       DEV_DSF_FHIR_DB_USER_PASSWORD_FILE: /run/secrets/db_fhir_user.password
@@ -73,21 +76,6 @@ services:
       DEV_DSF_FHIR_DB_USER_USERNAME: fhir_server_user
       DEV_DSF_FHIR_DB_USER_PERMANENT_DELETE_GROUP: fhir_permanent_delete_users
       DEV_DSF_FHIR_DB_USER_PERMANENT_DELETE_USERNAME: fhir_server_permanent_delete_user
-      DEV_DSF_FHIR_SERVER_BASE_URL: "https://{{ dsf_fhir_domain }}/fhir"
-      DEV_DSF_FHIR_SERVER_ORGANIZATION_IDENTIFIER_VALUE: "{{ organization_identifier }}"
-      DEV_DSF_FHIR_SERVER_ORGANIZATION_THUMBPRINT: "{{ organization_thumbprint }}"
-      DEV_DSF_FHIR_SERVER_ROLECONFIG: |
-        - remote_user:
-            thumbprint: {{ remote_user_thumbprint }}
-            token-role: admin
-            dsf-role:
-              - CREATE
-              - READ
-              - UPDATE
-              - DELETE
-              - SEARCH
-              - HISTORY
-              - PERMANENT_DELETE
     networks:
       dms:
         aliases:
@@ -149,6 +137,10 @@ services:
     - type: bind
       source: "{{ bpe_cache_path }}"
       target: /opt/bpe/cache
+    env_file:
+    - path: ./bpe.env.default
+    - path: ./bpe.env
+      required: false
     environment:
       TZ: Europe/Berlin
       DEV_DSF_SERVER_AUTH_TRUST_CLIENT_CERTIFICATE_CAS: /run/secrets/client_trust_certificates.pem
@@ -163,16 +155,8 @@ services:
       DEV_DSF_BPE_DB_USER_USERNAME: bpe_server_user
       DEV_DSF_BPE_DB_USER_CAMUNDA_GROUP: camunda_users
       DEV_DSF_BPE_DB_USER_CAMUNDA_USERNAME: camunda_server_user
-      DEV_DSF_BPE_FHIR_SERVER_BASE_URL: "https://{{ dsf_fhir_domain }}/fhir"
-      DE_MEDIZININFORMATIK_INITIATIVE_DATA_TRANSFER_DMS_FHIR_SERVER_BASE_URL: http://kds-store:8080/fhir
-      DE_MEDIZININFORMATIK_INITIATIVE_DATA_SHARING_DMS_FHIR_SERVER_BASE_URL: http://kds-store:8080/fhir
       DE_MEDIZININFORMATIK_INITIATIVE_DMS_PUBLIC_KEY: /run/secrets/dms_public_key.pem
       DE_MEDIZININFORMATIK_INITIATIVE_DMS_PRIVATE_KEY: /run/secrets/dms_private_key.pem
-      DE_MEDIZININFORMATIK_INITIATIVE_KDS_FHIR_DATALOGGINGENABLED: "true"
-      DEV_DSF_BPE_PROCESS_EXCLUDED: |
-        medizininformatik-initiativede_coordinateDataSharing|{{ data_sharing_version }}
-        medizininformatik-initiativede_executeDataSharing|{{ data_sharing_version }}
-        medizininformatik-initiativede_dataSend|{{ data_transfer_version }}
     networks:
       dms:
       bpe:
@@ -188,7 +172,7 @@ services:
     image: nginx:1.25.2
     restart: always
     healthcheck:
-      test: ["CMD-SHELL", "curl -ks https://localhost || exit 1"]
+      test: ["CMD-SHELL", "curl -sk --cacert /run/secrets/proxy_trusted_client_cas.pem --fail-with-body https://localhost:8443"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -218,9 +202,9 @@ networks:
 
 secrets:
   proxy_certificate_and_int_cas.pem:
-    file: "{{ proxy_certificate_and_int_cas_path }}"
+    file: "{{ certificate_path }}"
   proxy_certificate_private_key.pem:
-    file: "{{ proxy_certificate_private_key_path }}"
+    file: "{{ private_key_path }}"
   proxy_trusted_client_cas.pem:
     file: "{{ proxy_trusted_client_cas_path }}"
 

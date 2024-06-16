@@ -1,0 +1,102 @@
+services:
+
+  db:
+    image: postgres:15
+    restart: on-failure
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U liquibase_user -d bpe"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - type: volume
+        source: db-data
+        target: /var/lib/postgresql/data
+    environment:
+      TZ: Europe/Berlin
+      POSTGRES_PASSWORD_FILE: /run/secrets/db_liquibase.password
+      POSTGRES_USER: liquibase_user
+      POSTGRES_DB: bpe
+    secrets:
+      - db_liquibase.password
+
+  bpe-app:
+    image: ghcr.io/datasharingframework/bpe:{{ dsf_version }}
+    healthcheck:
+      test: [ "CMD-SHELL", "./healthcheck.sh" ]
+      interval: 10s
+      timeout: 15s
+      retries: 5
+    restart: on-failure
+    secrets:
+    - db_liquibase.password
+    - db_user.password
+    - db_user_camunda.password
+    - app_client_trust_certificates.pem
+    - app_client_certificate.pem
+    - app_client_certificate_private_key.pem
+    - fhir_server.htpasswd.password
+    - ssl_ca_certificate_file.pem
+    - trust_store.jks
+    volumes:
+    - type: bind
+      source: {{ project_path }}/process
+      target: /opt/bpe/process
+      read_only: true
+    - type: bind
+      source: {{ project_path }}/log
+      target: /opt/bpe/log
+    - type: bind
+      source: {{ project_path }}/cache
+      target: /opt/bpe/cache
+    env_file:
+    - path: ./bpe.env.default
+    - path: ./bpe.env
+      required: false
+    environment:
+      DEV_DSF_SERVER_AUTH_TRUST_CLIENT_CERTIFICATE_CAS: /run/secrets/ssl_ca_certificate_file.pem
+      DEV_DSF_BPE_DB_LIQUIBASE_PASSWORD_FILE: /run/secrets/db_liquibase.password
+      DEV_DSF_BPE_DB_USER_PASSWORD_FILE: /run/secrets/db_user.password
+      DEV_DSF_BPE_DB_USER_CAMUNDA_PASSWORD_FILE: /run/secrets/db_user_camunda.password
+      DEV_DSF_BPE_FHIR_CLIENT_TRUST_SERVER_CERTIFICATE_CAS: /run/secrets/app_client_trust_certificates.pem
+      DEV_DSF_BPE_FHIR_CLIENT_CERTIFICATE: /run/secrets/app_client_certificate.pem
+      DEV_DSF_BPE_FHIR_CLIENT_CERTIFICATE_PRIVATE_KEY: /run/secrets/app_client_certificate_private_key.pem
+      DEV_DSF_BPE_DB_URL: jdbc:postgresql://db/bpe
+      DE_MEDIZININFORMATIK_INITIATIVE_REPORT_DIC_FHIR_SERVER_TRUST_CERTIFICATES: /run/secrets/ssl_ca_certificate_file.pem
+      DE_MEDIZININFORMATIK_INITIATIVE_REPORT_DIC_FHIR_SERVER_BASICAUTH_USERNAME: {{ env }}
+      DE_MEDIZININFORMATIK_INITIATIVE_REPORT_DIC_FHIR_SERVER_BASICAUTH_PASSWORD_FILE: /run/secrets/fhir_server.htpasswd.password
+      DE_MEDIZININFORMATIK_INITIATIVE_DATA_SHARING_DIC_FHIR_SERVER_TRUST_CERTIFICATES: /run/secrets/ssl_ca_certificate_file.pem
+      DE_MEDIZININFORMATIK_INITIATIVE_DATA_SHARING_DIC_FHIR_SERVER_BASICAUTH_USERNAME: {{ env }}
+      DE_MEDIZININFORMATIK_INITIATIVE_DATA_SHARING_DIC_FHIR_SERVER_BASICAUTH_PASSWORD_FILE: /run/secrets/fhir_server.htpasswd.password
+      DE_MEDIZININFORMATIK_INITIATIVE_FEASIBILITY_DSF_PROCESS_CLIENT_STORE_AUTH_BASIC_USERNAME: {{ env }}
+      DE_MEDIZININFORMATIK_INITIATIVE_FEASIBILITY_DSF_PROCESS_CLIENT_STORE_AUTH_BASIC_PASSWORD: {{ basic_auth_password }}
+      DE_MEDIZININFORMATIK_INITIATIVE_FEASIBILITY_DSF_PROCESS_CLIENT_STORE_TRUST_STORE_PATH: /run/secrets/trust_store.jks
+      DE_MEDIZININFORMATIK_INITIATIVE_FEASIBILITY_DSF_PROCESS_CLIENT_STORE_TRUST_STORE_PASSWORD: password
+    depends_on:
+    - db
+
+volumes:
+  db-data:
+    name: diz-{{ diz_instance }}-bpe-db-data
+
+secrets:
+  db_liquibase.password:
+    file: {{ secrets_path }}/db_liquibase.password
+  db_user.password:
+    file: {{ secrets_path }}/db_user.password
+  db_user_camunda.password:
+    file: {{ secrets_path }}/db_user_camunda.password
+
+  app_client_trust_certificates.pem:
+    file: {{ secrets_path }}/trusted_cas.pem
+  app_client_certificate.pem:
+    file: {{ secrets_path }}/bpe.diz-{{ diz_instance }}.{{ env }}.ffg.de.crt
+  app_client_certificate_private_key.pem:
+    file: {{ secrets_path }}/bpe.diz-{{ diz_instance }}.{{ env }}.ffg.de.key
+
+  ssl_ca_certificate_file.pem:
+    file: {{ secrets_path }}/trusted_cas.pem
+  trust_store.jks:
+    file: {{ secrets_path}}/root-ca.local.jks
+  fhir_server.htpasswd.password:
+    file: {{ secrets_path }}/diz-{{ instance }}-triangle.local.htpasswd.password

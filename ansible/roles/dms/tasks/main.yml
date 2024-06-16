@@ -7,21 +7,17 @@
     bpe_process_path: "{{ deploy_path }}/bpe/process"
     fhir_log_path: "{{ deploy_path }}/fhir/logs"
     nginx_conf_path: "{{ deploy_path }}/nginx.conf"
-    proxy_certificate_and_int_cas_path: "{{ secrets_path }}/dsf.dms.test.ffg.de.cer"
-    proxy_certificate_private_key_path: "{{ secrets_path }}/dsf.dms.test.ffg.de.key"
     proxy_trusted_client_cas_path: "{{ secrets_path }}/trusted_cas.pem"
-    client_certificate_path: "{{ secrets_path }}/bpe.dms.test.ffg.de.cer"
-    client_certificate_private_key_path: "{{ secrets_path }}/bpe.dms.test.ffg.de.key"
+    client_certificate_path: "{{ secrets_path }}/bpe.dms.{{ env }}.ffg.de.crt"
+    client_certificate_private_key_path: "{{ secrets_path }}/bpe.dms.{{ env }}.ffg.de.key"
     client_trust_certificates_path: "{{ secrets_path }}/trusted_cas.pem"
     db_liquibase_password_path: "{{ secrets_path }}/db_liquibase.password"
-    db_bpe_user_password_path: "{{ secrets_path }}/db_bpe_user.password"
-    db_bpe_user_camunda_password_path: "{{ secrets_path }}/db_bpe_user_camunda.password"
-    db_fhir_user_password_path: "{{ secrets_path }}/db_fhir_user.password"
-    db_fhir_user_permanent_delete_password_path: "{{ secrets_path }}/db_fhir_user_permanent_delete.password"
+    db_bpe_user_password_path: "{{ secrets_path }}/db_user.password"
+    db_bpe_user_camunda_password_path: "{{ secrets_path }}/db_user_camunda.password"
+    db_fhir_user_password_path: "{{ secrets_path }}/db_user.password"
+    db_fhir_user_permanent_delete_password_path: "{{ secrets_path }}/db_user_permanent_delete.password"
     dms_public_key_path: "{{ secrets_path }}/dms_public_key.pem"
     dms_private_key_path: "{{ secrets_path }}/dms_private_key.pem"
-    dsf_fhir_domain: "{{ dms_dsf_domain }}"
-    organization_identifier: dms.test.forschen-fuer-gesundheit.de
     data_sharing_version: "{{ dsf_process_data_sharing_version | regex_replace('^(\\d+\\.\\d+)\\.\\d+\\.\\d+.*$', '\\1') }}"
     data_transfer_version: "{{ dsf_process_data_transfer_version | regex_replace('^(\\d+\\.\\d+)\\.\\d+\\.\\d+.*$', '\\1') }}"
 
@@ -53,41 +49,78 @@
     storage_file_path: "{{ item.src }}"
     host_file_path: "{{ item.dest }}"
   loop:
-  - src:  "secrets/domain/test.ffg.de.cer"
-    dest: "{{ proxy_certificate_and_int_cas_path }}"
-  - src:  "secrets/domain/test.ffg.de.key"
-    dest: "{{ proxy_certificate_private_key_path }}"
-  - src:  "secrets/domain/trusted_cas.pem"
+  - src:  "secrets/{{env}}/domain/trusted_cas.pem"
     dest: "{{ proxy_trusted_client_cas_path }}"
-  - src:  "secrets/dsf/dms/bpe.dms.test.ffg.de.cer"
+  - src:  "secrets/{{env}}/dsf/dms/bpe.dms.{{ env }}.ffg.de.crt"
     dest: "{{ client_certificate_path }}"
-  - src:  "secrets/dsf/dms/bpe.dms.test.ffg.de.key"
+  - src:  "secrets/{{env}}/dsf/dms/bpe.dms.{{ env }}.ffg.de.key"
     dest: "{{ client_certificate_private_key_path }}"
-  - src:  "secrets/dsf/dms/db_bpe_user.password"
-    dest: "{{ db_bpe_user_password_path }}"
-  - src:  "secrets/dsf/dms/db_bpe_user_camunda.password"
+  - src:  "secrets/{{env}}/dsf/dms/db_user_camunda.password"
     dest: "{{ db_bpe_user_camunda_password_path }}"
-  - src:  "secrets/dsf/dms/db_fhir_user.password"
+  - src:  "secrets/{{env}}/dsf/dms/db_user.password"
     dest: "{{ db_fhir_user_password_path }}"
-  - src:  "secrets/dsf/dms/db_fhir_user_permanent_delete.password"
+  - src:  "secrets/{{env}}/dsf/dms/db_user_permanent_delete.password"
     dest: "{{ db_fhir_user_permanent_delete_password_path }}"
-  - src:  "secrets/dsf/dms/db_liquibase.password"
+  - src:  "secrets/{{env}}/dsf/dms/db_liquibase.password"
     dest: "{{ db_liquibase_password_path }}"
-  - src:  "secrets/dsf/dms/dms_public_key.pem"
+  - src:  "secrets/{{env}}/dsf/dms/dms_public_key.pem"
     dest: "{{ dms_public_key_path }}"
-  - src:  "secrets/dsf/dms/dms_private_key.pem"
+  - src:  "secrets/{{env}}/dsf/dms/dms_private_key.pem"
     dest: "{{ dms_private_key_path }}"
 
-- name: DMS - Generate bpe certificate thumbprint
+- name: DMS - Get Certificate and Key from Storage
+  include_role:
+    name: common
+    tasks_from: get-storage-file
+  vars:
+    storage_file_path: "{{ item.src }}"
+    host_file_path: "{{ item.dest }}"
+  loop:
+  - src:  "secrets/{{ env }}/domain/fdpg.{{ env }}.ffg.de.crt"
+    dest: "{{ secrets_path }}/fdpg.{{ env }}.ffg.de.cer"
+  - src:  "secrets/{{ env }}/domain/fdpg.{{ env }}.ffg.de.key"
+    dest: "{{ secrets_path }}/fdpg.{{ env }}.ffg.de.key"
+  when: not letsencrypt_enabled
+
+- name: DMS - Set Certificate and Key Path Variables
+  set_fact:
+    certificate_path: "{{ secrets_path }}/fdpg.{{ env }}.ffg.de.crt"
+    private_key_path: "{{ secrets_path }}/fdpg.{{ env }}.ffg.de.key"
+  when: not letsencrypt_enabled
+
+- name: Get Certificate and Key from LetsEncrypt
+  include_role:
+    name: common
+    tasks_from: certbot
+  vars:
+    certbot_register_email: info@tmf-ev.de
+    certbot_register_domain: "{{ dms_dsf_domain }}"
+    certificates_path: "{{ secrets_path }}/letsencrypt"
+    certbot_user_id: 101
+    certbot_group_id: 101
+  when: letsencrypt_enabled
+
+- name: DMS - Generate Client Certificate Thumbprint
   shell:
-    cmd: openssl x509 -noout -fingerprint -sha512 -inform pem -in "{{ secrets_path }}/bpe.dms.test.ffg.de.cer" | tr \[:upper:\] \[:lower:\] | tr -d ':' | sed 's/sha512 fingerprint=//'
+    cmd: openssl x509 -noout -fingerprint -sha512 -inform pem -in {{ item }} | tr \[:upper:\] \[:lower:\] | tr -d ':' | sed 's/sha512 fingerprint=//'
+  delegate_to: localhost
+  loop:
+  - "{{ storage_path }}/secrets/{{ env }}/dsf/dms/bpe.dms.{{ env }}.ffg.de.crt"
+  - "{{ storage_path }}/secrets/{{ env }}/dsf/Webbrowser_Test_User/Webbrowser_Test_User.{{ env }}.ffg.de.crt"
+  - "{{ storage_path }}/secrets/{{ env }}/dsf/fdpg/bpe.fdpg.{{ env }}.ffg.de.crt"
+  - "{{ storage_path }}/secrets/{{ env }}/dsf/diz-1/bpe.diz-1.{{ env }}.ffg.de.crt"
+  - "{{ storage_path }}/secrets/{{ env }}/dsf/diz-2/bpe.diz-2.{{ env }}.ffg.de.crt"
   register: cert_thumbprint
   changed_when: false
 
-- name: DMS - Set fact for bpe certificate thumbprint
+- name: DMS - Extract Certificate Thumbprints to variables
   set_fact:
-    organization_thumbprint: "{{ cert_thumbprint.stdout | trim }}"
-    remote_user_thumbprint: "{{ cert_thumbprint.stdout | trim }}"
+    dms_organization_thumbprint: "{{ cert_thumbprint.results[0].stdout }}"
+    webbrowser_test_user_thumbprint: "{{ cert_thumbprint.results[1].stdout }}"
+    fdpg_organization_thumbprint: "{{ cert_thumbprint.results[2].stdout }}"
+    diz_1_organization_thumbprint: "{{ cert_thumbprint.results[3].stdout }}"
+    diz_2_organization_thumbprint: "{{ cert_thumbprint.results[4].stdout }}"
+  changed_when: false
 
 - name: DMS - Install bpe process plugins
   include_role:
@@ -115,7 +148,7 @@
         basename: "mii-process-data-transfer"
         extension: "jar"
 
-- name: "DMS - Deploy service files"
+- name: DMS - Deploy service files
   template:
     src: "{{ item.src }}"
     dest: "{{ deploy_path }}/{{ item.dest }}"
@@ -127,13 +160,42 @@
     dest: "docker-compose.yml"
   - src: "nginx.conf.j2"
     dest: "nginx.conf"
-  register: "service_files"
+  - src: "dsf-bpe.env.default.j2"
+    dest: "bpe.env.default"
+  - src: "dsf-fhir.env.default.j2"
+    dest: "fhir.env.default"
+  - src: "allowlist.xml.j2"
+    dest: "allowlist.xml"
 
 - name: DMS - Start services
-  community.docker.docker_compose:
+  community.docker.docker_compose_v2:
     project_src: "{{ deploy_path }}"
     project_name: "dms"
-    files:
-    - docker-compose.yml
-    recreate: "{{ 'always' if service_files.results[1].changed == true else 'smart'}}"
 
+- name: DMS - Wait for FHIR app
+  uri:
+    url: "https://{{ dms_dsf_domain }}/fhir/metadata"
+    method: GET
+    ca_path: "{{ secrets_path }}/trusted_cas.pem"
+    client_cert: "{{ secrets_path }}/bpe.dms.{{ env }}.ffg.de.crt"
+    client_key: "{{ secrets_path }}/bpe.dms.{{ env }}.ffg.de.key"
+  register: _result
+  until: _result.status == 200
+  retries: 12 # 12 * 10s = 120s
+  delay: 10 # Every 5 seconds
+
+- name: DMS - Upload Allow List
+  uri:
+    remote_src: true
+    url: "https://{{ dms_dsf_domain }}/fhir/"
+    method: POST
+    ca_path: "{{ secrets_path }}/trusted_cas.pem"
+    client_cert: "{{ secrets_path }}/bpe.dms.{{ env }}.ffg.de.crt"
+    client_key: "{{ secrets_path }}/bpe.dms.{{ env }}.ffg.de.key"
+    headers:
+      Content-Type: application/fhir+xml
+    src: "{{ deploy_path }}/allowlist.xml"
+    timeout: 60
+    status_code:
+    - 200
+    - 201

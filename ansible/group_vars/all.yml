@@ -2,19 +2,5 @@
 # variables for all hosts
 deploy_user: ubuntu
 deploy_path: "/home/{{ deploy_user }}/deploy"
-deploy_version: "readd_dsf"
+storage_path: ../.remote-storage
 secrets_path: "{{ deploy_path }}/secrets"
-fdpg_portal_domain: fdpg.test.forschen-fuer-gesundheit.de
-fdpg_portal_aktin_domain: aktin.fdpg.test.forschen-fuer-gesundheit.de
-fdpg_portal_dsf_domain: dsf.fdpg.test.forschen-fuer-gesundheit.de
-fdpg_auth_domain: auth.fdpg.test.forschen-fuer-gesundheit.de
-diz_1_dsf_domain: dsf.diz-1.test.forschen-fuer-gesundheit.de
-diz_2_dsf_domain: dsf.diz-2.test.forschen-fuer-gesundheit.de
-mii_fhir_domain: fhir.test.forschen-fuer-gesundheit.de
-dms_dsf_domain: dsf.dms.test.forschen-fuer-gesundheit.de
-storage_path: .remote-storage
-dsf_process_ping_pong_version: "1.0.1.0"
-dsf_process_feasibility_version: "1.0.0.3"
-dsf_process_report_version: "1.0.0.0"
-dsf_process_data_sharing_version: "1.0.0.0-RC1"
-dsf_process_data_transfer_version: "1.0.0.0-RC2"
