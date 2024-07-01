@@ -4,3 +4,34 @@ deploy_user: ubuntu
 deploy_path: "/home/{{ deploy_user }}/deploy"
 storage_path: ../.remote-storage
 secrets_path: "{{ deploy_path }}/secrets"
+dsf_process_plugins_metadata:
+  dsf_process_data_sharing:
+    name: "dsf_process_data_sharing"
+    url: "https://github.com/medizininformatik-initiative/mii-process-data-sharing"
+    file:
+      basename: "mii-process-data-sharing"
+      extension: "jar"
+  dsf_process_data_transfer:
+    name: "dsf_process_data_transfer"
+    url: "https://github.com/medizininformatik-initiative/mii-process-data-transfer"
+    file:
+      basename: "mii-process-data-transfer"
+      extension: "jar"
+  dsf_process_feasibility:
+    name: "dsf_process_feasibility"
+    url: "https://github.com/medizininformatik-initiative/mii-process-feasibility"
+    file:
+      basename: "mii-process-feasibility"
+      extension: "jar"
+  dsf_process_ping_pong:
+    name: "dsf_process_ping_pong"
+    url: "https://github.com/datasharingframework/dsf-process-ping-pong"
+    file:
+      basename: "dsf-process-ping-pong"
+      extension: "jar"
+  dsf_process_report:
+    name: "dsf_process_report"
+    url: "https://github.com/medizininformatik-initiative/mii-process-report"
+    file:
+      basename: "mii-process-report"
+      extension: "jar"
