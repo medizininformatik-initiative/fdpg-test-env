@@ -1,9 +1,16 @@
 ---
+
+- name: DSF BPE - Build plugins configuration
+  set_fact:
+    dsf_process_plugins: "{{ dsf_process_plugins | default([]) + [[item.name] | map('extract', dsf_process_plugins_metadata) | combine({ 'version': item.version })] }}"
+    dsf_process_excluded: "{{ dsf_process_excluded | default([]) + [ [process_scope] | map('extract', {process_scope: []} | combine(item.process_excluded | default({'process_excluded': {}}))) | default([]) | flatten | join(',') ] }}"
+  loop: "{{ process_plugins | selectattr('install_targets', 'contains', process_scope) | list }}"
+
 - name: DSF BPE - Build plugin search patterns
   set_fact:
     plugin_patterns: "{{ plugin_patterns | default([]) + [ item.file.basename ~ '(-.*)?\\.' ~ item.file.extension ] }}"
     plugin_excludes: "{{ plugin_excludes | default([]) + [ item.file.basename ~ '-' ~ item.version ~ '.' ~ item.file.extension ] }}"
-  loop: "{{ process_plugins }}"
+  loop: "{{ dsf_process_plugins }}"
 
 - name: DSF BPE - Find other plugin versions
   find:
@@ -14,12 +21,6 @@
     excludes: "{{ plugin_excludes | default([]) }}"
   register: other_plugin_versions
 
-- name: DSF BPE - Delete other plugin versions
-  file:
-    path: "{{ item.path }}"
-    state: absent
-  loop: "{{ other_plugin_versions.files }}"
-
 - name: DSF BPE - Download process plugins
   get_url:
     url: "{{ item.url }}/releases/download/v{{ item.version }}/{{ item.file.basename }}-{{ item.version }}.{{ item.file.extension }}"
@@ -27,4 +28,10 @@
     owner: "{{ deploy_user }}"
     group: "{{ deploy_user }}"
     mode: "444"
-  loop: "{{ process_plugins | default([]) }}"
+  loop: "{{ dsf_process_plugins | default([]) }}"
+
+- name: DSF BPE - Delete other plugin versions
+  file:
+    path: "{{ item.path }}"
+    state: absent
+  loop: "{{ other_plugin_versions.files }}"

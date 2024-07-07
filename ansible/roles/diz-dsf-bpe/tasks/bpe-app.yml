@@ -50,31 +50,8 @@
     tasks_from: dsf-bpe-install-plugins
   vars:
     process_plugin_folder_path: "{{ project_path }}/process"
-    process_plugins:
-    - name: ping-pong
-      url: "https://github.com/datasharingframework/dsf-process-ping-pong"
-      version: "{{ dsf_process_ping_pong_version }}"
-      file:
-        basename: "dsf-process-ping-pong"
-        extension: "jar"
-    - name: feasibility
-      url: "https://github.com/medizininformatik-initiative/mii-process-feasibility"
-      version: "{{ dsf_process_feasibility_version }}"
-      file:
-        basename: "feasibility-dsf-process"
-        extension: "jar"
-    - name: report
-      url: "https://github.com/medizininformatik-initiative/mii-process-report"
-      version: "{{ dsf_process_report_version }}"
-      file:
-        basename: "mii-process-report"
-        extension: "jar"
-    - name: data-sharing
-      url: "https://github.com/medizininformatik-initiative/mii-process-data-sharing"
-      version: "{{ dsf_process_data_sharing_version }}"
-      file:
-        basename: "mii-process-data-sharing"
-        extension: "jar"
+    process_plugins: "{{ dsf_process_plugins_install }}"
+    process_scope: 'diz'
 
 - name: DSF FHIR - Generate files from templates
   template:
