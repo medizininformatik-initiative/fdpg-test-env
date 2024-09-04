@@ -28,32 +28,34 @@
     vars:
       path: "{{ project_path }}/.env"
       variables:
-      - name: FEASIBILITY_BACKEND_API_BASE_URL
+      - name: DATAPORTAL_BACKEND_API_BASE_URL
         value:   "https://{{ fdpg_portal_domain }}/api/"
-      - name: FEASIBILITY_BACKEND_ALLOWED_ORIGINS
+      - name: DATAPORTAL_BACKEND_ALLOWED_ORIGINS
         value:   "https://{{ fdpg_portal_domain }}"
-      - name: FEASIBILITY_BACKEND_BROKER_CLIENT_DIRECT_ENABLED
+      - name: DATAPORTAL_BACKEND_BROKER_CLIENT_DIRECT_ENABLED
         value:   "false"
-      - name: FEASIBILITY_BACKEND_AKTIN_ENABLED
+      - name: DATAPORTAL_BACKEND_AKTIN_ENABLED
         value:   "false"
-      - name: FEASIBILITY_BACKEND_DSF_ENABLED
+      - name: DATAPORTAL_BACKEND_DSF_ENABLED
         value:   "true"
-      - name: FEASIBILITY_BACKEND_CERTS_PATH
+      - name: DATAPORTAL_BACKEND_CERTS_PATH
         value: "{{ secrets_path }}"
-      - name: FEASIBILITY_BACKEND_DSF_CACERT
-        value:   "/opt/codex-feasibility-security/trusted_cas.pem"
-      - name: FEASIBILITY_BACKEND_DSF_DSF_SECURITY_KEYSTORE_P12FILE
-        value:   "/opt/codex-feasibility-security/backend.fdpg.{{ env }}.ffg.de.p12"
-      - name: FEASIBILITY_BACKEND_DSF_ORGANIZATION_ID
+      - name: DATAPORTAL_BACKEND_DSF_CACERT
+        value:   "/opt/dataportal-security/trusted_cas.pem"
+      - name: DATAPORTAL_BACKEND_DSF_DSF_SECURITY_KEYSTORE_P12FILE
+        value:   "/opt/dataportal-security/backend.fdpg.{{ env }}.ffg.de.p12"
+      - name: DATAPORTAL_BACKEND_DSF_ORGANIZATION_ID
         value:   "forschen-fuer-gesundheit.de"
-      - name: FEASIBILITY_BACKEND_DSF_WEBSERVICE_BASE_URL
+      - name: DATAPORTAL_BACKEND_DSF_WEBSERVICE_BASE_URL
         value:   "https://{{ fdpg_portal_dsf_domain }}/fhir"
-      - name: FEASIBILITY_BACKEND_DSF_WEBSOCKET_URL
+      - name: DATAPORTAL_BACKEND_DSF_WEBSOCKET_URL
         value:   "wss://{{ fdpg_portal_dsf_domain }}:443/fhir/ws"
-      - name: FEASIBILITY_BACKEND_KEYCLOAK_BASE_URL_ISSUER
+      - name: DATAPORTAL_BACKEND_KEYCLOAK_BASE_URL_ISSUER
         value:   "https://{{ fdpg_auth_domain }}"
-      - name: FEASIBILITY_BACKEND_KEYCLOAK_BASE_URL_JWK
+      - name: DATAPORTAL_BACKEND_KEYCLOAK_BASE_URL_JWK
         value:   "https://{{ fdpg_auth_domain }}"
+      - name: DATAPORTAL_BACKEND_CQL_TRANSLATE_ENABLED
+        value:   "false"
 
   - name: FDPG Backend - Start containers
     community.docker.docker_compose_v2:

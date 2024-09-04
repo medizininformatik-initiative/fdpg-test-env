@@ -18,12 +18,12 @@
     loop:
     - after: '\s*"auth"'
       before: '\s*"legal"'
-      regexp: '\s*"baseUrl":\s*"https://.*localhost.*"'
+      regexp: '\s*"baseUrl":\s*"https://example.org.*"'
       replace: '"baseUrl": "https://{{ fdpg_auth_domain }}"'
     - after: '\s*"uiBackendApi"'
       before: '\s*"auth"'
-      regexp: '\s*"baseUrl":\s*"https://.*localhost.*/api/v3"'
-      replace: '"baseUrl": "https://{{ fdpg_portal_domain }}/api/v3"'
+      regexp: '\s*"baseUrl":\s*"https://.*localhost.*/api/v4"'
+      replace: '"baseUrl": "https://{{ fdpg_portal_domain }}/api/v4"'
 
   - name: FDPG GUI - Start GUI
     community.docker.docker_compose_v2:

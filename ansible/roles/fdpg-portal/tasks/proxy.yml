@@ -76,7 +76,17 @@
     lineinfile:
       path: "{{ project_path }}/docker-compose.yml"
       insertafter: '^\s*volumes:$'
-      line: "      - ${PROXY_TRUSTED_CA_CERTIFICATE_PATH:-../auth/trusted_cas.pem}:/etc/nginx/conf.d/ca.pem"
+      line: "      - ${PROXY_TRUSTED_CA_CERTIFICATE_PATH:-../auth/trusted_cas.pem}:/etc/nginx/certs/ca.pem"
+
+  - name: FDPG Proxy - Setup evnironment variables
+    include_role:
+      name: common
+      tasks_from: set-env
+    vars:
+      path: "{{ project_path }}/.env"
+      variables:
+      - name: FEASIBILITY_PORTAL_PROXY_NGINX_CONFIG
+        value: "{{ project_path }}/nginx.conf"
 
   - name: FDPG Proxy - Start Proxy
     community.docker.docker_compose_v2:
