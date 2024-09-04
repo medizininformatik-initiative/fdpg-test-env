@@ -1,0 +1,17 @@
+#!/bin/bash
+
+docker start certbot-renew
+docker wait certbot-renew
+
+if [ -f /tmp/letsencrypt/_renewed ]
+then
+  docker compose -p {{ project_name }} {%- if (docker_compose_files is defined) and (docker_compose_files is iterable) %}
+                           {%- for dc_file in docker_compose_files %} -f {{ dc_file }}
+                           {%- endfor %}
+                         {%- endif %} restart {%- if (docker_compose_services is defined) and (docker_compose_services is iterable) %}
+                           {%- for dc_service in docker_compose_services %} {{ dc_service }}
+                           {%- endfor %}
+                         {%- endif %}
+
+  rm /tmp/letsencrypt/_renewed
+fi

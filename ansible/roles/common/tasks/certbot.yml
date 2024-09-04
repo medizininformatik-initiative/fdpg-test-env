@@ -4,7 +4,7 @@
   - common
   - certbot
   block:
-  - name: Set directory writable by certbot
+  - name: Certbot - Set directory writable by certbot
     file:
         path: "{{ item }}"
         state: directory
@@ -14,8 +14,8 @@
     loop:
     - "{{ certificates_path }}"
     - "/tmp/letsencrypt"
-  
-  - name: Register certbot
+
+  - name: Certbot - Register certbot
     shell: |
       docker run --rm \
                  --name certbot-register \
@@ -29,8 +29,8 @@
       creates: "{{ certificates_path }}/.registered"
     tags:
     - certbot
-  
-  - name: Setup Certbot Container
+
+  - name: Certbot - Setup Certbot Container
     docker_container:
       name: certbot-renew
       image: certbot/certbot
@@ -48,22 +48,34 @@
       - "/tmp/letsencrypt:/var/lib/letsencrypt"
     tags:
     - certbot
-  
-  - name: Wait until certificate is present before continuing
+
+  - name: Certbot - Wait until certificate is present before continuing
     ansible.builtin.wait_for:
       path: "{{ certificates_path }}/live/{{ certbot_register_domain }}"
       timeout: 30
-  
-  - name: Setup cronjob for certificate renewal
+
+  - name: Certbot - Copy renewal script
+    template:
+      src: "cert-renewal.sh.j2"
+      dest: "{{ deploy_path }}/cert-renewal.sh"
+      owner: ubuntu
+      group: ubuntu
+      mode: u+rwx,g-wx,o-rwx
+    vars:
+      project_name: "{{ certbot_renewal_project_name }}"
+      docker_compose_files: "{{ certbot_renewal_docker_compose_files }}"
+      docker_compose_services: "{{ certbot_renewal_docker_compose_services }}"
+
+  - name: Certbot - Setup cronjob for certificate renewal
     cron:
       name: certbot-renewal
-      job: /bin/bash -lc '/usr/bin/docker start certbot-renew'
+      job: "/bin/bash -l {{ deploy_path }}/cert-renewal.sh"
       minute: "0"
       hour: "1"
     tags:
     - certbot
-  
-  - name: Get certificate path
+
+  - name: Certbot - Get certificate path
     shell: |
       docker run --rm \
                  --name certbot-list \
@@ -77,8 +89,8 @@
       sed 's#/etc/letsencrypt#{{ certificates_path }}#'
     register: cert_path
     changed_when: false
-  
-  - name: Get private key path
+
+  - name: Certbot - Get private key path
     shell: |
       docker run --rm \
                  --name certbot-list \
@@ -92,8 +104,8 @@
       sed 's#/etc/letsencrypt#{{ certificates_path }}#'
     register: pkey_path
     changed_when: false
-  
-  - name: Copy certificate and private key paths to facts
+
+  - name: Certbot - Copy certificate and private key paths to facts
     set_fact:
       certificate_path: "{{ cert_path.stdout}}"
       private_key_path: "{{ pkey_path.stdout }}"

@@ -46,6 +46,9 @@
       certificates_path: "{{ secrets_path }}/letsencrypt"
       certbot_user_id: 101
       certbot_group_id: 101
+      certbot_renewal_project_name: "{{ project_name }}"
+      certbot_renewal_docker_compose_files:
+      - "{{ project_path }}/docker-compose.yml"
     when: letsencrypt_enabled
 
   - name: FDPG Proxy - Copy nginx configuration

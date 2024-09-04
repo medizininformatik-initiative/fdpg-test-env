@@ -5,7 +5,7 @@ events {
   }
 
 http {
-
+    include /etc/nginx/mime.types;
     gzip on;
     gzip_vary on;
     gzip_min_length 10240;
@@ -41,13 +41,17 @@ http {
     add_header                    Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
     add_header                    X-Content-Type-Options nosniff;
 
+    # DNS resolver needed for Docker
+    resolver 127.0.0.11 valid=10s;
+
     server {
 
         listen       8443 ssl;
         server_name {{ fdpg_portal_domain }};
 
         location / {
-            proxy_pass http://dataportal-ui:8080/;
+            set $upstream dataportal-ui:8080;
+            proxy_pass http://$upstream$request_uri;
             proxy_set_header X-Forwarded-For   $proxy_add_x_forwarded_for;
             proxy_set_header X-Forwarded-Proto $scheme;
             proxy_set_header Host $host;
@@ -58,7 +62,8 @@ http {
         }
 
         location /api/ {
-            proxy_pass http://feasibility-gui-backend:8090/api/;
+            set $upstream feasibility-gui-backend:8090;
+            proxy_pass http://$upstream$request_uri;
             proxy_set_header X-Forwarded-Proto $scheme;
             proxy_set_header X-Forwarded-Host  $host;
         }
@@ -76,7 +81,8 @@ http {
         location / {
             proxy_set_header     X-ClientCert $ssl_client_escaped_cert;
             client_max_body_size 10M;
-            proxy_pass           http://fhir-app:8080;
+            set                  $upstream fhir-app:8080;
+            proxy_pass           http://$upstream$request_uri;
             proxy_http_version   1.1;
             proxy_set_header     Upgrade $http_upgrade;
             proxy_set_header     Connection "upgrade";
