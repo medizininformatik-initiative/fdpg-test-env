@@ -29,6 +29,12 @@ dsf_process_plugins_metadata:
     file:
       basename: "dsf-process-ping-pong"
       extension: "jar"
+  dsf_process_allow_list:
+    name: "dsf_process_ping_pong"
+    url: "https://github.com/datasharingframework/dsf-process-allow-list"
+    file:
+      basename: "dsf-process-allow-list"
+      extension: "jar"
   dsf_process_report:
     name: "dsf_process_report"
     url: "https://github.com/medizininformatik-initiative/mii-process-report"

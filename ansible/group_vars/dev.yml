@@ -17,6 +17,19 @@ letsencrypt_enabled: true
 feasibility_evaluation_obfuscate: false
 dsf_version: "1.6.0"
 dsf_process_plugins_install:
+- name: dsf_process_allow_list
+  version: "1.0.0.1"
+  install_targets:
+  - fdpg
+  - diz
+  - dms
+  process_excluded:
+    fdpg:
+    - "dsfdev_updateAllowList|1.0"
+    diz:
+    - "dsfdev_updateAllowList|1.0"
+    dms:
+    - "dsfdev_updateAllowList|1.0"
 - name: dsf_process_ping_pong
   version: "1.0.1.0"
   install_targets:
