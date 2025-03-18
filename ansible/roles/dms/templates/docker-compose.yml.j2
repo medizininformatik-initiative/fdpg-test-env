@@ -1,6 +1,6 @@
 services:
   kds-store:
-    image:  ghcr.io/samply/blaze:0.28
+    image:  ghcr.io/samply/blaze:0.33
     restart: unless-stopped
     healthcheck:
       test: [ "CMD", "curl", "http://localhost:8080/health" ]
@@ -40,7 +40,7 @@ services:
       target: /var/lib/postgresql/data
 
   dsf-fhir:
-    image: ghcr.io/datasharingframework/fhir:1.5.1
+    image: ghcr.io/datasharingframework/fhir:{{ dsf_version }}
     restart: unless-stopped
     healthcheck:
       test: [ "CMD-SHELL", "./healthcheck.sh" ]
@@ -109,7 +109,7 @@ services:
       target: /var/lib/postgresql/data
 
   dsf-bpe:
-    image: ghcr.io/datasharingframework/bpe:1.5.1
+    image: ghcr.io/datasharingframework/bpe:{{ dsf_version }}
     restart: unless-stopped
     healthcheck:
       test: [ "CMD-SHELL", "./healthcheck.sh" ]
