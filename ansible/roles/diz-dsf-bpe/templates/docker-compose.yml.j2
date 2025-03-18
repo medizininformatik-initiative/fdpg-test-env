@@ -53,25 +53,6 @@ services:
     - path: ./bpe.env.default
     - path: ./bpe.env
       required: false
-    environment:
-      DEV_DSF_SERVER_AUTH_TRUST_CLIENT_CERTIFICATE_CAS: /run/secrets/ssl_ca_certificate_file.pem
-      DEV_DSF_BPE_DB_LIQUIBASE_PASSWORD_FILE: /run/secrets/db_liquibase.password
-      DEV_DSF_BPE_DB_USER_PASSWORD_FILE: /run/secrets/db_user.password
-      DEV_DSF_BPE_DB_USER_CAMUNDA_PASSWORD_FILE: /run/secrets/db_user_camunda.password
-      DEV_DSF_BPE_FHIR_CLIENT_TRUST_SERVER_CERTIFICATE_CAS: /run/secrets/app_client_trust_certificates.pem
-      DEV_DSF_BPE_FHIR_CLIENT_CERTIFICATE: /run/secrets/app_client_certificate.pem
-      DEV_DSF_BPE_FHIR_CLIENT_CERTIFICATE_PRIVATE_KEY: /run/secrets/app_client_certificate_private_key.pem
-      DEV_DSF_BPE_DB_URL: jdbc:postgresql://db/bpe
-      DE_MEDIZININFORMATIK_INITIATIVE_REPORT_DIC_FHIR_SERVER_TRUST_CERTIFICATES: /run/secrets/ssl_ca_certificate_file.pem
-      DE_MEDIZININFORMATIK_INITIATIVE_REPORT_DIC_FHIR_SERVER_BASICAUTH_USERNAME: {{ env }}
-      DE_MEDIZININFORMATIK_INITIATIVE_REPORT_DIC_FHIR_SERVER_BASICAUTH_PASSWORD_FILE: /run/secrets/fhir_server.htpasswd.password
-      DE_MEDIZININFORMATIK_INITIATIVE_DATA_SHARING_DIC_FHIR_SERVER_TRUST_CERTIFICATES: /run/secrets/ssl_ca_certificate_file.pem
-      DE_MEDIZININFORMATIK_INITIATIVE_DATA_SHARING_DIC_FHIR_SERVER_BASICAUTH_USERNAME: {{ env }}
-      DE_MEDIZININFORMATIK_INITIATIVE_DATA_SHARING_DIC_FHIR_SERVER_BASICAUTH_PASSWORD_FILE: /run/secrets/fhir_server.htpasswd.password
-      DE_MEDIZININFORMATIK_INITIATIVE_FEASIBILITY_DSF_PROCESS_CLIENT_STORE_AUTH_BASIC_USERNAME: {{ env }}
-      DE_MEDIZININFORMATIK_INITIATIVE_FEASIBILITY_DSF_PROCESS_CLIENT_STORE_AUTH_BASIC_PASSWORD: {{ basic_auth_password }}
-      DE_MEDIZININFORMATIK_INITIATIVE_FEASIBILITY_DSF_PROCESS_CLIENT_STORE_TRUST_STORE_PATH: /run/secrets/trust_store.jks
-      DE_MEDIZININFORMATIK_INITIATIVE_FEASIBILITY_DSF_PROCESS_CLIENT_STORE_TRUST_STORE_PASSWORD: password
     depends_on:
     - db
 
