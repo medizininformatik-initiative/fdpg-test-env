@@ -39,11 +39,25 @@
       variables:
       - name: PORT_FHIR_SERVER_LOCALHOST
         value: "127.0.0.1:8081"
+      - name: FHIR_SERVER_BASE_URL
+        value: "{{ 'http://fhir-server:8080' if feasibility_evaluation_strategy == 'structured-query' else 'https://' ~ lookup('vars', 'diz_' + diz_instance + '_fhir_domain' ) }}"
+      - name: FHIR_SERVER_OPENID_PROVIDER_URL
+        value: ""
+      - name: FHIR_SERVER_OPENID_CLIENT_TRUST_STORE_PASS
+        value: ""
+
+  - name: FHIR Server - Remove OpenID configuration
+    lineinfile:
+      path: "{{ project_path }}/docker-compose.yml"
+      regexp: "^\\s*OPENID_.*"
+      state: absent
 
   - name: FHIR Server - Start container
     community.docker.docker_compose_v2:
       project_src: "{{ project_path }}"
       project_name: "{{ project_name }}"
+      services:
+      - fhir-server
     environment:
       COMPOSE_IGNORE_ORPHANS: "1"
 
