@@ -58,6 +58,8 @@
         value:   "true"
       - name: DATAPORTAL_BACKEND_LOG_LEVEL
         value:   "debug"
+      - name: DATAPORTAL_BACKEND_PRIVACY_THRESHOLD_RESULTS
+        value:   "10"
 
   - name: FDPG Backend - Start containers
     community.docker.docker_compose_v2:
