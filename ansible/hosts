@@ -42,6 +42,9 @@ dev_keycloak
 dev_diz_dsf_fhir
 dev_diz_dsf_bpe
 dev_diz_triangle
+dev_diz
+dev_diz_1
+dev_diz_2
 dev_dms
 
 [dev_portal]
@@ -91,6 +94,9 @@ test_keycloak
 test_diz_dsf_fhir
 test_diz_dsf_bpe
 test_diz_triangle
+test_diz
+test_diz_1
+test_diz_2
 test_dms
 mii_fhir
 perf_test
