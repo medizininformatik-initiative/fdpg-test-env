@@ -37,6 +37,9 @@
     certificates_path: "{{ secrets_path }}/letsencrypt"
     certbot_user_id: 101
     certbot_group_id: 101
+    certbot_renewal_project_name: keycloak
+    certbot_renewal_docker_compose_files:
+    - "{{ deploy_path }}/proxy-docker-compose.yml"
   when: letsencrypt_enabled
 
 - name: Get Keycloak environment config stats
@@ -97,10 +100,6 @@
     - docker-compose.yml
   register: keycloak_docker
 
-- name: Get keycloak network name
-  set_fact:
-    keycloak_network: "{{ keycloak_docker.containers[lookup('ansible.utils.index_of', keycloak_docker.containers, 'eq', 'auth', 'Service')].Networks | first }}"
-
 - name: Copy Proxy configuration
   template:
     src: nginx.conf.j2
@@ -127,7 +126,6 @@
 - name: Wait for Keycloak
   uri:
     url: "https://{{ fdpg_auth_domain }}"
-    follow_redirects: none
     method: GET
     validate_certs: false
   register: _result
@@ -140,8 +138,8 @@
   vars:
     admin_password: "{{ kc_admin_password }}"
     username: "test"
-    first_name: "User"
-    last_name: "Test"
+    first_name: "Test"
+    last_name: "User"
     email: "foo@bar.baz"
     password_file: "{{ kc_test_user_password }}"
     roles:

@@ -75,6 +75,11 @@
     certificates_path: "{{ secrets_path }}/letsencrypt"
     certbot_user_id: 101
     certbot_group_id: 101
+    certbot_renewal_project_name: "diz-{{ diz_instance }}"
+    certbot_renewal_docker_compose_files:
+    - "{{ project_path }}/docker-compose.yml"
+    certbot_renewal_docker_compose_services:
+    - proxy
   when: letsencrypt_enabled
 
 - name: DSF FHIR - Generate Client Certificate Thumbprint
