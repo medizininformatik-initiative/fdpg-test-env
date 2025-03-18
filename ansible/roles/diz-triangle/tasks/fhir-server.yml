@@ -61,6 +61,15 @@
     environment:
       COMPOSE_IGNORE_ORPHANS: "1"
 
+  - name: FHIR Server - Wait for FHIR server
+    uri:
+      url: "http://localhost:8081/fhir/metadata"
+      method: GET
+    register: _result
+    until: _result.status == 200
+    retries: 12 # 12 * 10s = 120s
+    delay: 10 # Every 5 seconds
+
   - name: DSF FHIR - Get patient count
     uri:
       remote_src: true
