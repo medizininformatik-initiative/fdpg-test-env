@@ -29,7 +29,7 @@
       path: "{{ project_path }}/.env"
       variables:
       - name: FLARE_LOG_LEVEL
-        value: "{{ 'debug' if enable_debug is defined and enable_debug == 'true' else 'info' }}"
+        value: "debug"
 
   - name: Flare - Start container
     community.docker.docker_compose_v2:
