@@ -39,7 +39,7 @@
                          {%- if (certbot_register_sans is defined) and (certbot_register_sans is iterable) %}
                            {%- for san in certbot_register_sans %} -d {{ san }}
                            {%- endfor %}
-                         {%- endif %}"
+                         {%- endif %} --deploy-hook 'touch /var/lib/letsencrypt/_renewed'"
       ports:
       - "80:80"
       volumes:
