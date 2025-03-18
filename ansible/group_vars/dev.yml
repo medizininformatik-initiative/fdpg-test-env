@@ -15,7 +15,7 @@ diz_2_dsf_organization_identifier: diz-2.dev.forschen-fuer-gesundheit.de
 dms_dsf_organization_identifier: dms.dev.forschen-fuer-gesundheit.de
 letsencrypt_enabled: true
 feasibility_evaluation_obfuscate: false
-dsf_version: "1.6.0"
+dsf_version: "1.7.0"
 dsf_process_plugins_install:
 - name: dsf_process_allow_list
   version: "1.0.0.1"
@@ -37,7 +37,7 @@ dsf_process_plugins_install:
   - diz
   - dms
 - name: dsf_process_feasibility
-  version: "1.0.0.7"
+  version: "1.0.0.8"
   install_targets:
   - fdpg
   - diz
@@ -72,7 +72,7 @@ dsf_process_plugins_install:
     - "medizininformatik-initiativede_reportReceive|1.1"
 
 - name: dsf_process_data_sharing
-  version: "1.0.2.0"
+  version: "1.0.2.1"
   install_targets:
   - fdpg
   - diz
@@ -89,7 +89,7 @@ dsf_process_plugins_install:
     - "medizininformatik-initiativede_executeDataSharing|1.0"
 
 - name: dsf_process_data_transfer
-  version: "1.0.3.0"
+  version: "1.0.3.1"
   install_targets:
   - diz
   - dms
