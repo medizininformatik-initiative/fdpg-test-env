@@ -10,8 +10,8 @@ diz_2_dsf_domain: dsf.diz-2.test.forschen-fuer-gesundheit.de
 dms_dsf_domain: dsf.dms.test.forschen-fuer-gesundheit.de
 mii_fhir_domain: fhir.test.forschen-fuer-gesundheit.de
 fdpg_portal_dsf_organization_identifier: forschen-fuer-gesundheit.de
-diz_1_dsf_organization_identifier: diz-1.test.forschen-fuer-gesundheit.de
-diz_2_dsf_organization_identifier: diz-2.test.forschen-fuer-gesundheit.de
+diz_1_dsf_organization_identifier: diz-1.test.fdpg.forschen-fuer-gesundheit.de
+diz_2_dsf_organization_identifier: diz-2.test.fdpg.forschen-fuer-gesundheit.de
 dms_dsf_organization_identifier: dms.test.forschen-fuer-gesundheit.de
 letsencrypt_enabled: false
 feasibility_evalution_obfuscate: true
