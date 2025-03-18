@@ -18,6 +18,46 @@
     - src:  "secrets/{{ env }}/domain/root-ca.local.crt"
       dest: "{{ secrets_path }}/root-ca.local.crt"
 
+  - name: Reverse Proxy - Get Certificate and Key from Storage
+    include_role:
+      name: common
+      tasks_from: get-storage-file
+    vars:
+      storage_file_path: "{{ item.src }}"
+      host_file_path: "{{ item.dest }}"
+    loop:
+    - src:  "secrets/{{ env }}/domain/fdpg.{{ env }}.ffg.de.crt"
+      dest: "{{ secrets_path }}/fdpg.{{ env }}.ffg.de.crt"
+    - src:  "secrets/{{ env }}/domain/fdpg.{{ env }}.ffg.de.key"
+      dest: "{{ secrets_path }}/fdpg.{{ env }}.ffg.de.key"
+    when: not letsencrypt_enabled
+
+  - name: Reverse Proxy - Set Certificate and Key Path Variables
+    set_fact:
+      certificate_path: "{{ secrets_path }}/fdpg.{{ env }}.ffg.de.crt"
+      private_key_path: "{{ secrets_path }}/fdpg.{{ env }}.ffg.de.key"
+    when: not letsencrypt_enabled
+
+  - name: Reverse Proxy - Set Module Variables
+    set_fact:
+      domain: "{{ lookup('vars', 'diz_' + diz_instance + '_fhir_domain' ) }}"
+    when: letsencrypt_enabled
+
+  - name: Reverse Proxy - Get Certificate and Key from LetsEncrypt
+    include_role:
+      name: common
+      tasks_from: certbot
+    vars:
+      certbot_register_email: info@tmf-ev.de
+      certbot_register_domain: "{{ domain }}"
+      certificates_path: "{{ secrets_path }}/letsencrypt"
+      certbot_user_id: 101
+      certbot_group_id: 101
+      certbot_renewal_project_name: "{{ project_name }}"
+      certbot_renewal_docker_compose_files:
+      - "{{ project_path }}/docker-compose.yml"
+    when: letsencrypt_enabled
+
   - name: Reverse Proxy - Get environment config stats
     stat:
       path: "{{ project_path }}/.env"
