@@ -93,19 +93,18 @@
         value: "{{ secrets_path }}/diz-{{ diz_instance }}-triangle.local.key"
       - name: FEASIBILITY_TRIANGLE_REV_PROXY_HTTP_PASSWORD_FILE
         value: "{{ secrets_path }}/diz-{{ diz_instance }}-triangle.local.htpasswd"
+      - name: FHIR_SERVER_HOSTNAME
+        value: "triangle.diz.local"
+      - name: FLARE_HOSTNAME
+        value: "triangle.diz.local"
+      - name: FEASIBILITY_TRIANGLE_REV_PROXY_NGINX_CONFIG
+        value: "./context-paths.nginx.conf"
 
-  - name: Reverse Proxy - Add self signed ca certificate
-    lineinfile:
-      path: "{{ item.path }}"
-      insertafter: "{{ item.insertafter }}"
-      line: "{{ item.line }}"
-    loop:
-    - path: "{{ project_path }}/docker-compose.yml"
-      insertafter: '^    volumes:'
-      line: "      - {{ secrets_path }}/root-ca.local.crt:/etc/nginx/conf.d/ca.pem"
-    - path: "{{ project_path }}/nginx.conf"
-      insertafter: '^\s*# SSL-Certificate and private key'
-      line: "        ssl_trusted_certificate /etc/nginx/conf.d/ca.pem;"
+  - name: Reverse Proxy - Disable Blaze Frontend
+    replace:
+      path: "{{ project_path }}/context-paths.nginx.conf"
+      regexp: "^(\\s*)default http://fhir-server-frontend:3000;.*$"
+      replace: "\\1default http://fhir-server:8080;"
 
   - name: Reverse Proxy - Start container
     community.docker.docker_compose_v2:

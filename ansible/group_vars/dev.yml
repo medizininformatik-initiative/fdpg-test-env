@@ -1,19 +1,22 @@
 ---
 # variables for all hosts
 env: dev
-deploy_version: "v5.1.0-alpha.1"
+deploy_version: "v5.2.2"
 fdpg_portal_domain: datenportal.dev.forschen-fuer-gesundheit.de
 fdpg_portal_aktin_domain: aktin.datenportal.dev.forschen-fuer-gesundheit.de
 fdpg_portal_dsf_domain: dsf.datenportal.dev.forschen-fuer-gesundheit.de
 fdpg_auth_domain: auth.dev.forschen-fuer-gesundheit.de
 diz_1_dsf_domain: dsf.diz-1.dev.forschen-fuer-gesundheit.de
 diz_2_dsf_domain: dsf.diz-2.dev.forschen-fuer-gesundheit.de
+diz_1_fhir_domain: fhir.diz-1.dev.forschen-fuer-gesundheit.de
+diz_2_fhir_domain: fhir.diz-2.dev.forschen-fuer-gesundheit.de
 dms_dsf_domain: dsf.dms.dev.forschen-fuer-gesundheit.de
 fdpg_portal_dsf_organization_identifier: forschen-fuer-gesundheit.de
 diz_1_dsf_organization_identifier: diz-1.dev.forschen-fuer-gesundheit.de
 diz_2_dsf_organization_identifier: diz-2.dev.forschen-fuer-gesundheit.de
 dms_dsf_organization_identifier: dms.dev.forschen-fuer-gesundheit.de
 letsencrypt_enabled: true
+blaze_frontend_enabled: true
 feasibility_evaluation_obfuscate: false
 dsf_version: "1.7.0"
 dsf_process_plugins_install:

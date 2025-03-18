@@ -54,7 +54,7 @@
     host_file_path: "{{ item.dest }}"
   loop:
   - src:  "secrets/{{ env }}/domain/fdpg.{{ env }}.ffg.de.crt"
-    dest: "{{ secrets_path }}/fdpg.{{ env }}.ffg.de.cer"
+    dest: "{{ secrets_path }}/fdpg.{{ env }}.ffg.de.crt"
   - src:  "secrets/{{ env }}/domain/fdpg.{{ env }}.ffg.de.key"
     dest: "{{ secrets_path }}/fdpg.{{ env }}.ffg.de.key"
   when: not letsencrypt_enabled
@@ -123,6 +123,7 @@
   community.docker.docker_compose_v2:
     project_src: "{{ project_path }}"
     project_name: "diz-{{ diz_instance }}"
+    recreate: "{% if recreateContainer is defined and recreateContainer|lower in ['yes', 'true'] %}always{% else %}auto{% endif %}"
 
 - name: DSF FHIR - Wait for FHIR app
   uri:

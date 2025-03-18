@@ -1,12 +1,14 @@
 ---
 # variables for all hosts
 env: test
-deploy_version: "v5.0.0"
+deploy_version: "v5.2.2"
 fdpg_portal_domain: datenportal.test.forschen-fuer-gesundheit.de
 fdpg_portal_dsf_domain: dsf.fdpg.test.forschen-fuer-gesundheit.de
 fdpg_auth_domain: auth.fdpg.test.forschen-fuer-gesundheit.de
 diz_1_dsf_domain: dsf.diz-1.test.forschen-fuer-gesundheit.de
 diz_2_dsf_domain: dsf.diz-2.test.forschen-fuer-gesundheit.de
+diz_1_fhir_domain: fhir.diz-1.test.forschen-fuer-gesundheit.de
+diz_2_fhir_domain: fhir.diz-2.test.forschen-fuer-gesundheit.de
 dms_dsf_domain: dsf.dms.test.forschen-fuer-gesundheit.de
 mii_fhir_domain: fhir.test.forschen-fuer-gesundheit.de
 fdpg_portal_dsf_organization_identifier: forschen-fuer-gesundheit.de

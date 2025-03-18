@@ -18,7 +18,7 @@
     loop:
     - after: '\s*"auth"'
       before: '\s*"legal"'
-      regexp: '\s*"baseUrl":\s*"https://example.org.*"'
+      regexp: '\s*"baseUrl":\s*"https://.*"'
       replace: '"baseUrl": "https://{{ fdpg_auth_domain }}"'
     - after: '\s*"uiBackendApi"'
       before: '\s*"auth"'

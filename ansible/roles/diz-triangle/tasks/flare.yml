@@ -21,7 +21,7 @@
       remote_src: true
     when: flare_env.stat.exists == false or flare_env.stat.ctime < flare_env_default.stat.ctime
 
-  - name: Flare - Setup evnironment variables
+  - name: Flare - Setup environment variables
     include_role:
       name: common
       tasks_from: set-env
@@ -30,6 +30,12 @@
       variables:
       - name: FLARE_LOG_LEVEL
         value: "debug"
+
+  - name: Flare - Remove OpenID configuration
+    lineinfile:
+      path: "{{ project_path }}/docker-compose.yml"
+      regexp: "^\\s*FLARE_FHIR_OAUTH_.*"
+      state: absent
 
   - name: Flare - Start container
     community.docker.docker_compose_v2:
