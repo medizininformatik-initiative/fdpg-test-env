@@ -67,7 +67,7 @@ resource "hcloud_primary_ip" "dsf_fhir" {
 resource "hcloud_server" "dsf_fhir" {
   name         = terraform.workspace == "default" ? format("diz-%d-dsf-fhir", var.number) : format("%s-diz-%d-dsf-fhir", terraform.workspace, var.number)
   image        = "ubuntu-22.04"
-  server_type  = "cx11"
+  server_type  = "cpx21"
   datacenter   = "fsn1-dc14"
   ssh_keys     = var.ssh_keys
   firewall_ids = [hcloud_firewall.dmz.id]
