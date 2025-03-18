@@ -12,6 +12,11 @@
   set_fact:
     diz_instance: "{{ inventory_hostname | regex_replace('^.*-diz-(\\d+)-.*$', '\\1') }}"
   failed_when: inventory_hostname is not regex('^.*-diz-\d+-.*$')
+  tags:
+  - common
+  - fhir
+  - flare
+  - proxy
 
 - name: DIZ Triangle - Deploy FHIR server
   include_tasks: fhir-server.yml
