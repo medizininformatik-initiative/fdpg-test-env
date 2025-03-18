@@ -16,6 +16,7 @@ diz_1_dsf_organization_identifier: diz-1.test.fdpg.forschen-fuer-gesundheit.de
 diz_2_dsf_organization_identifier: diz-2.test.fdpg.forschen-fuer-gesundheit.de
 dms_dsf_organization_identifier: dms.test.forschen-fuer-gesundheit.de
 letsencrypt_enabled: false
+blaze_frontend_enabled: true
 feasibility_evalution_obfuscate: true
 dsf_version: "1.7.0"
 dsf_process_plugins_install:

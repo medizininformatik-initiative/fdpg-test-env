@@ -4,6 +4,7 @@ deploy_user: ubuntu
 deploy_path: "/home/{{ deploy_user }}/deploy"
 storage_path: ../.remote-storage
 secrets_path: "{{ deploy_path }}/secrets"
+kds_testdata_url: "https://github.com/medizininformatik-initiative/mii-testdata/releases/download/v1.0.1/kds-testdata-2024.0.1.zip"
 dsf_process_plugins_metadata:
   dsf_process_data_sharing:
     name: "dsf_process_data_sharing"
