@@ -18,7 +18,7 @@ dms_dsf_organization_identifier: dms.dev.forschen-fuer-gesundheit.de
 letsencrypt_enabled: true
 blaze_frontend_enabled: true
 feasibility_evaluation_obfuscate: false
-dsf_version: "1.7.0"
+dsf_version: "1.7.1"
 dsf_process_plugins_install:
 - name: dsf_process_allow_list
   version: "1.0.0.1"
