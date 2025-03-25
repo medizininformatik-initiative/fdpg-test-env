@@ -1,7 +1,7 @@
 ---
 # variables for all hosts
 env: test
-deploy_version: "v5.2.2"
+deploy_version: "v5.2.4"
 fdpg_portal_domain: datenportal.test.forschen-fuer-gesundheit.de
 fdpg_portal_dsf_domain: dsf.fdpg.test.forschen-fuer-gesundheit.de
 fdpg_auth_domain: auth.fdpg.test.forschen-fuer-gesundheit.de
