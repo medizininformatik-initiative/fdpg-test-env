@@ -59,6 +59,18 @@ services:
     depends_on:
       - db
 
+  fhir-store:
+    image:  ghcr.io/samply/blaze:0.33
+    restart: unless-stopped
+    healthcheck:
+      test: [ "CMD", "curl", "http://localhost:8080/health" ]
+      interval: 10s
+      timeout: 15s
+      retries: 5
+    environment:
+      BASE_URL: http://fhir-store:8080
+      LOG_LEVEL: info
+
   bpe-app:
     image: ghcr.io/datasharingframework/bpe:{{ dsf_version }}
     healthcheck:
@@ -102,6 +114,7 @@ services:
     depends_on:
       - db
       - fhir-app
+      - fhir-store
 
 volumes:
   db-data:
