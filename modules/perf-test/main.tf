@@ -8,8 +8,8 @@ resource "hcloud_primary_ip" "perf_test" {
 
 #resource "hcloud_server" "perf_test" {
 #  name         = "perf-test"
-#  image        = "ubuntu-22.04"
-#  server_type  = "ccx42"
+#  image        = "ubuntu-24.04"
+#  server_type  = "cax31"
 #  datacenter   = "fsn1-dc14"
 #  ssh_keys     = var.ssh_keys
 #
