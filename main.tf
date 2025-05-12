@@ -35,6 +35,7 @@ module "fdpg" {
     data.hcloud_ssh_key.jgruendner.id,
     data.hcloud_ssh_key.rwettstein.id
   ]
+  count    = terraform.workspace == "dev" ? 1 : 0
 }
 
 module "dms" {
