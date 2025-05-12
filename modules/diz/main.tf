@@ -98,7 +98,7 @@ resource "hcloud_primary_ip" "triangle" {
 resource "hcloud_server" "dsf_bpe" {
   name         = terraform.workspace == "default" ? format("diz-%d-dsf-bpe", var.number) : format("%s-diz-%d-dsf-bpe", terraform.workspace, var.number)
   image        = "ubuntu-22.04"
-  server_type  = "cx11"
+  server_type  = "cx22"
   datacenter   = "fsn1-dc14"
   ssh_keys     = var.ssh_keys
   firewall_ids = [hcloud_firewall.intern.id]
