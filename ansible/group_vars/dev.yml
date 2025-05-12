@@ -1,7 +1,7 @@
 ---
 # variables for all hosts
 env: dev
-deploy_version: "v5.2.4"
+deploy_version: "release/v5.3.0-alpha"
 fdpg_portal_domain: datenportal.dev.forschen-fuer-gesundheit.de
 fdpg_portal_aktin_domain: aktin.datenportal.dev.forschen-fuer-gesundheit.de
 fdpg_portal_dsf_domain: dsf.datenportal.dev.forschen-fuer-gesundheit.de
