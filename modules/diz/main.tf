@@ -118,7 +118,7 @@ resource "hcloud_server" "dsf_bpe" {
 resource "hcloud_server" "triangle" {
   name        = terraform.workspace == "default" ? format("diz-%d-triangle", var.number) : format("%s-diz-%d-dsf-triangle", terraform.workspace, var.number)
   image       = "ubuntu-22.04"
-  server_type = "cx31"
+  server_type = "cx21"
   datacenter  = "fsn1-dc14"
   ssh_keys    = var.ssh_keys
 
