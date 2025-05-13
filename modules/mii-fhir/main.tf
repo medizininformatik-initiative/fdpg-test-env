@@ -41,8 +41,8 @@ resource "hcloud_primary_ip" "mii_fhir" {
 
 resource "hcloud_server" "mii_fhir" {
   name         = "mii-fhir"
-  image        = "ubuntu-22.04"
-  server_type  = "cx31"
+  image        = "ubuntu-24.04"
+  server_type  = "cax31"
   datacenter   = "fsn1-dc14"
   ssh_keys     = var.ssh_keys
   firewall_ids = [hcloud_firewall.mii_fhir.id]
