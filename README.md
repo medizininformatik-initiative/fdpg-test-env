@@ -127,10 +127,6 @@ Host fdpg-monitoring
 Hostname 49.12.187.254
 User ubuntu
 
-Host fdpg-perf-test
-Hostname 49.13.17.192
-User ubuntu
-
 Host mii-fhir
 Hostname 128.140.115.131
 User ubuntu
