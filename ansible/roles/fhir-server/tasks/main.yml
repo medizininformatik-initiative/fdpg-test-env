@@ -50,7 +50,7 @@
     certificates_path: "{{ secrets_path }}/letsencrypt"
     certbot_user_id: 101
     certbot_group_id: 101
-  when: letsencrypt_enabled
+  when: not letsencrypt_enabled
 
 - name: FHIR Server - Generate files from templates
   template:
