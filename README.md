@@ -87,14 +87,6 @@ HostName 128.140.60.107
 User ubuntu
 
 # FDPG Test Environment
-Host test-fdpg
-Hostname 91.107.208.91
-User ubuntu
-
-Host test-fdpg-keycloak
-Hostname 49.13.3.64
-User ubuntu
-
 Host test-dms-dsf-fhir
 Hostname 162.55.171.40
 User ubuntu

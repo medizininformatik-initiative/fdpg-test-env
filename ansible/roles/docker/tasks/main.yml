@@ -7,9 +7,11 @@
     - ca-certificates
     - curl
     - gnupg-agent
+    - jq
     - software-properties-common
     - python3-pip
     - python3-jmespath
+    - python3-yaml
     state: present
     update_cache: yes
 
@@ -23,14 +25,10 @@
     repo: deb https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable
     state: present
 
-- name: Install Docker
+- name: Install Docker and Python Docker Packages
   apt:
-    name: docker-ce
-    state: present
-
-- name: Install docker-compose
-  pip:
     name:
-    - PyYAML
-    - docker
-    - docker-compose
+    - docker-ce
+    - python3-docker
+    - python3-compose
+    state: present

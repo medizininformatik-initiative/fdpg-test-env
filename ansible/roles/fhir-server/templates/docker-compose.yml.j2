@@ -1,22 +1,28 @@
 services:
   blaze:
-    image: samply/blaze:0.26.0
-    restart: on-failure
+    image: samply/blaze:0.34
+    restart: unless-stopped
     healthcheck:
       test: [ "CMD", "curl", "http://localhost:8080/health" ]
       interval: 10s
       timeout: 15s
       retries: 5
+    ports:
+    - "127.0.0.1:8080:8080"
     environment:
       BASE_URL: "https://{{ mii_fhir_domain }}"
-      LOG_LEVEL: "info"
+      LOG_LEVEL: "debug"
       JAVA_TOOL_OPTIONS: "-Xmx4g"
+      DB_BLOCK_CACHE_SIZE: "4096"
+      DB_RESOURCE_CACHE_SIZE: "100000"
+      CQL_EXPR_CACHE_SIZE: "128"
+      DB_RESOURCE_STORE_KV_THREADS: "8"
     volumes:
     - "blaze-data:/app/data"
 
   proxy:
-    image: 'nginx:1.25.4'
-    restart: on-failure
+    image: 'nginx:1.28.0'
+    restart: unless-stopped
     ports:
     - "443:8443"
     volumes:

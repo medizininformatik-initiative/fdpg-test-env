@@ -4,6 +4,7 @@
   apt:
     name:
     - curl
+    - unzip
     state: present
     update_cache: yes
 
@@ -49,7 +50,7 @@
     certificates_path: "{{ secrets_path }}/letsencrypt"
     certbot_user_id: 101
     certbot_group_id: 101
-  when: not letsencrypt_enabled
+  when: letsencrypt_enabled
 
 - name: FHIR Server - Generate files from templates
   template:
@@ -68,13 +69,33 @@
   community.docker.docker_compose_v2:
     project_src: "{{ deploy_path }}"
     project_name: mii-fhir
+  register: fhir_server_status
 
 - name: FHIR Server - Wait until blaze server is up before continuing
-  ansible.builtin.wait_for:
-    host: "{{ mii_fhir_domain }}"
-    port: "443"
-    path: "/fhir/metadata"
-    timeout: 60
+  ansible.builtin.uri:
+    url: "https://{{ mii_fhir_domain }}:443/fhir/metadata"
+    status_code: 200
+  register: fhir_server_https
+  until: fhir_server_https.status == 200
+  retries: 30
+  delay: 2
+
+- name: Debug
+  debug:
+    var: ansible_facts
+
+- name: Define blazectl version
+  set_fact:
+    blazectl_version: "0.17.1"
+    blaze_architecture: ansible_facts.architecture == "aarch64" | ternary("arm64", "amd64")
+
+- name: Download Blazectl
+  ansible.builtin.unarchive:
+    src: https://github.com/samply/blazectl/releases/download/v{{ blazectl_version }}/blazectl-{{ blazectl_version }}-linux-{{ blazectl_architecture }}.tar.gz
+    remote_src: true
+    dest: /usr/local/bin
+    mode: '0555'
+    creates: /usr/local/bin/blazectl
 
 - name: FHIR Server - Check if test data is already loaded
   uri:
@@ -113,14 +134,9 @@
   loop: "{{ compressed_bundles.files | flatten(levels=1) }}"
   when: patient_stats.json.total == 0
 
-- name: FHIR Server - Get blaze container IP
-  set_fact:
-    blaze_ip: "{{ fhir_server_status.services.blaze['mii-fhir_blaze_1'].networks['mii-fhir_mii_fhir_network'].IPAddress }}"
-  when: patient_stats.json.total == 0
-
 - name: FHIR Server - Upload test data
   shell:
-    cmd: "for f in $(find {{ deploy_path }}/testdata -name '*.json'); do curl -Lsf -X POST -H 'Content-Type: application/json' -d @\"$f\" http://{{ blaze_ip }}:8080/fhir; done"
+    cmd: "for f in $(find {{ deploy_path }}/testdata -name '*.json'); do curl -Lsf -X POST -H 'Content-Type: application/json' -d @\"$f\" http://localhost:8080/fhir; done"
   when: patient_stats.json.total == 0
 
 - name: FHIR Server - Remove test data directory
