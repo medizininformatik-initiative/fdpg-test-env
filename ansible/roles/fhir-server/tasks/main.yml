@@ -50,7 +50,7 @@
     certificates_path: "{{ secrets_path }}/letsencrypt"
     certbot_user_id: 101
     certbot_group_id: 101
-  when: not letsencrypt_enabled
+  when: letsencrypt_enabled
 
 - name: FHIR Server - Generate files from templates
   template:
@@ -69,6 +69,7 @@
   community.docker.docker_compose_v2:
     project_src: "{{ deploy_path }}"
     project_name: mii-fhir
+    recreate: "{% if recreateContainer is defined and recreateContainer|lower in ['yes', 'true'] %}always{% else %}auto{% endif %}"
   register: fhir_server_status
 
 - name: FHIR Server - Wait until blaze server is up before continuing
