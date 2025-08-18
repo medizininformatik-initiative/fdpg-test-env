@@ -29,6 +29,6 @@
   apt:
     name:
     - docker-ce
+    - docker-compose
     - python3-docker
-    - python3-compose
     state: present
