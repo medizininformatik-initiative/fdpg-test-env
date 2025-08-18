@@ -152,6 +152,7 @@
   community.docker.docker_compose_v2:
     project_src: "{{ deploy_path }}"
     project_name: "dms"
+    recreate: "{% if recreateContainer is defined and recreateContainer|lower in ['yes', 'true'] %}always{% else %}auto{% endif %}"
 
 - name: DMS - Wait for FHIR app
   uri:
