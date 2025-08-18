@@ -71,15 +71,6 @@
   roles:
   - monitoring
 
-- name: Setup Perf Test
-  hosts: perf_test
-  become: true
-  roles:
-  - perf-test
-  - blazectl
-  - role: blaze-repo
-    become_user: ubuntu
-
 - name: Setup MII FHIR Server
   hosts: mii-fhir
   roles:
