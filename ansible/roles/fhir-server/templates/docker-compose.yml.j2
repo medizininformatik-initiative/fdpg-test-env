@@ -1,6 +1,6 @@
 services:
   blaze:
-    image: samply/blaze:0.34
+    image: samply/blaze:1.0.2
     restart: unless-stopped
     healthcheck:
       test: [ "CMD", "curl", "http://localhost:8080/health" ]

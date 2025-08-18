@@ -22,8 +22,8 @@
       replace: '"baseUrl": "https://{{ fdpg_auth_domain }}"'
     - after: '\s*"uiBackendApi"'
       before: '\s*"auth"'
-      regexp: '\s*"baseUrl":\s*"https://.*localhost.*/api/v4"'
-      replace: '"baseUrl": "https://{{ fdpg_portal_domain }}/api/v4"'
+      regexp: '\s*"baseUrl":\s*"https://.*localhost.*/api/v5"'
+      replace: '"baseUrl": "https://{{ fdpg_portal_domain }}/api/v5"'
 
   - name: FDPG GUI - Start GUI
     community.docker.docker_compose_v2:

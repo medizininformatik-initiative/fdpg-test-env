@@ -1,6 +1,6 @@
 services:
   kds-store:
-    image:  ghcr.io/samply/blaze:0.33
+    image:  ghcr.io/samply/blaze:1.0.2
     restart: unless-stopped
     healthcheck:
       test: [ "CMD", "curl", "http://localhost:8080/health" ]
@@ -168,7 +168,7 @@ services:
         condition: service_healthy
 
   proxy:
-    image: nginx:1.25.2
+    image: nginx:1.28.0
     restart: unless-stopped
     healthcheck:
       test: ["CMD-SHELL", "curl -sk --cacert /run/secrets/proxy_trusted_client_cas.pem --fail-with-body https://localhost:8443"]
