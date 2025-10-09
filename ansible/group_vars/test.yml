@@ -45,7 +45,7 @@ dsf_process_plugins_install:
   - diz
   - dms
 - name: dsf_process_feasibility
-  version: "1.0.0.8"
+  version: "1.0.0.9"
   install_targets:
   - fdpg
   - diz
