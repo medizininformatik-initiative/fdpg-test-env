@@ -2,7 +2,7 @@ services:
 
   db:
     image: postgres:15
-    restart: on-failure
+    restart: unless-stopped
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U liquibase_user -d postgres"]
       interval: 10s
@@ -30,7 +30,7 @@ services:
       interval: 10s
       timeout: 15s
       retries: 5
-    restart: on-failure
+    restart: unless-stopped
     secrets:
       - db_liquibase.password
       - db_user.password
@@ -78,7 +78,7 @@ services:
       interval: 10s
       timeout: 15s
       retries: 5
-    restart: on-failure
+    restart: unless-stopped
     secrets:
       - db_liquibase.password
       - db_user.password
