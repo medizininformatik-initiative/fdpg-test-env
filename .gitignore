@@ -7,3 +7,4 @@ terraform.tfstate
 .remote-storage/secrets/*
 !.remote-storage/secrets/README.md
 notes
+remote-storage
