@@ -92,6 +92,22 @@ dsf_process_plugins_install:
     dms:
     - "medizininformatik-initiativede_coordinateDataSharing|1.0"
     - "medizininformatik-initiativede_executeDataSharing|1.0"
+- name: dsf_process_data_sharing
+  version: "1.1.0.0"
+  install_targets:
+  - fdpg
+  - diz
+  - dms
+  process_excluded:
+    fdpg:
+    - "medizininformatik-initiativede_mergeDataSharing|1.1"
+    - "medizininformatik-initiativede_executeDataSharing|1.1"
+    diz:
+    - "medizininformatik-initiativede_coordinateDataSharing|1.1"
+    - "medizininformatik-initiativede_mergeDataSharing|1.1"
+    dms:
+    - "medizininformatik-initiativede_coordinateDataSharing|1.1"
+    - "medizininformatik-initiativede_executeDataSharing|1.1"
 - name: dsf_process_data_transfer
   version: "1.0.3.1"
   install_targets:
