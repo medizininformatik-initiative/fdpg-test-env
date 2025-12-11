@@ -39,6 +39,24 @@
   - src:  "secrets/{{ env }}/domain/diz-{{ instance }}-triangle.local.htpasswd.password"
     dest: "{{ secrets_path }}/diz-{{ instance }}-triangle.local.htpasswd.password"
 
+- name: DIZ DSF BPE - Generate Trusted CAs PKCS#12 TrustStore
+  command:
+    cmd: |
+      openssl pkcs12 -export -keypbe NONE -certpbe NONE -nomaciter
+                     -passout pass:password
+                     -jdktrust anyExtendedKeyUsage
+                     -in {{ secrets_path }}/trusted_cas.pem
+                     -out {{ secrets_path }}/trusted_cas.p12
+    creates: "{{ secrets_path }}/trusted_cas.p12"
+
+- name: DIZ DSF BPE - Set TrustStore File Permissions
+  file:
+    path: "{{ secrets_path }}/trusted_cas.p12"
+    state: file
+    owner: "{{ deploy_user }}"
+    group: "{{ deploy_user }}"
+    mode: "644"
+
 - name: DIZ DSF BPE - Read FHIR store basic authentication password
   slurp:
     src: "{{ secrets_path }}/diz-{{ instance }}-triangle.local.htpasswd.password"
@@ -52,8 +70,8 @@
     process_plugin_folder_path: "{{ project_path }}/process"
     process_plugins: "{{ dsf_process_plugins_install }}"
     process_scope: 'diz'
-
-- name: DSF FHIR - Generate files from templates
+    
+- name: DIZ DSF BPE - Generate files from templates
   template:
     src: "{{ item.src }}"
     dest: "{{ item.dest }}"
@@ -71,4 +89,7 @@
     dsf_process_report_version_number: "{{ dsf_process_report_version | regex_replace('^(\\d+\\.\\d+)\\.\\d+\\.\\d+.*$', '\\1') }}"
     dsf_process_data_sharing_version_number: "{{ dsf_process_data_sharing_version | regex_replace('^(\\d+\\.\\d+)\\.\\d+\\.\\d+.*$', '\\1') }}"
     dsf_process_feasibility_version_number: "{{ dsf_process_feasibility_version | regex_replace('^(\\d+\\.\\d+)\\.\\d+\\.\\d+.*$', '\\1') }}"
-
+    fhir_domain: "{{ lookup('vars', 'diz_' + diz_instance + '_fhir_domain' ) }}"
+    issuer_url: "https://{{ fdpg_auth_domain + (fdpg_auth_context | regex_replace('/$', '')) }}/realms/{{ fdpg_auth_realm }}"
+    client_id: "{{ blaze_auth_client_id }}"
+    client_secret: "{{ lookup('file', storage_path + '/secrets/' + env + '/keycloak/keycloak-' + blaze_auth_client_id + '.password') }}"

@@ -1,11 +1,13 @@
 ---
 # variables for all hosts
 env: dev
-deploy_version: "v5.4.6"
+dataportal_version: "main"
 fdpg_portal_domain: datenportal.dev.forschen-fuer-gesundheit.de
-fdpg_portal_aktin_domain: aktin.datenportal.dev.forschen-fuer-gesundheit.de
 fdpg_portal_dsf_domain: dsf.datenportal.dev.forschen-fuer-gesundheit.de
 fdpg_auth_domain: auth.dev.forschen-fuer-gesundheit.de
+fdpg_auth_context: /
+fdpg_auth_realm: dataportal
+fdpg_auth_client_id: dataportal
 diz_1_dsf_domain: dsf.diz-1.dev.forschen-fuer-gesundheit.de
 diz_2_dsf_domain: dsf.diz-2.dev.forschen-fuer-gesundheit.de
 diz_1_fhir_domain: blaze.diz-1.dev.forschen-fuer-gesundheit.de
@@ -17,8 +19,9 @@ diz_2_dsf_organization_identifier: diz-2.dev.forschen-fuer-gesundheit.de
 dms_dsf_organization_identifier: dms.dev.forschen-fuer-gesundheit.de
 letsencrypt_enabled: true
 blaze_frontend_enabled: true
+blaze_auth_client_id: blaze
 feasibility_evaluation_obfuscate: false
-dsf_version: "1.9.0"
+dsf_version: "2.0.1"
 dsf_process_plugins_install:
 - name: dsf_process_allow_list
   version: "1.0.0.1"
@@ -39,8 +42,14 @@ dsf_process_plugins_install:
   - fdpg
   - diz
   - dms
+- name: dsf_process_ping_pong
+  version: "2.0.0.2"
+  install_targets:
+  - fdpg
+  - diz
+  - dms
 - name: dsf_process_feasibility
-  version: "1.0.0.9"
+  version: "1.0.0.11"
   install_targets:
   - fdpg
   - diz
@@ -51,45 +60,17 @@ dsf_process_plugins_install:
     - "medizininformatik-initiativede_feasibilityRequest|1.0"
 
 - name: dsf_process_report
-  version: "1.0.0.0"
+  version: "1.2.0.1"
   install_targets:
   - fdpg
   - diz
   process_excluded:
     fdpg:
-    - "medizininformatik-initiativede_reportAutostart|1.0"
-    - "medizininformatik-initiativede_reportSend|1.0"
+    - "medizininformatik-initiativede_reportAutostart|1.2"
+    - "medizininformatik-initiativede_reportSend|1.2"
     diz:
-    - "medizininformatik-initiativede_reportReceive|1.0"
+    - "medizininformatik-initiativede_reportReceive|1.2"
 
-- name: dsf_process_report
-  version: "1.1.2.0"
-  install_targets:
-  - fdpg
-  - diz
-  process_excluded:
-    fdpg:
-    - "medizininformatik-initiativede_reportAutostart|1.1"
-    - "medizininformatik-initiativede_reportSend|1.1"
-    diz:
-    - "medizininformatik-initiativede_reportReceive|1.1"
-
-- name: dsf_process_data_sharing
-  version: "1.0.2.1"
-  install_targets:
-  - fdpg
-  - diz
-  - dms
-  process_excluded:
-    fdpg:
-    - "medizininformatik-initiativede_mergeDataSharing|1.0"
-    - "medizininformatik-initiativede_executeDataSharing|1.0"
-    diz:
-    - "medizininformatik-initiativede_coordinateDataSharing|1.0"
-    - "medizininformatik-initiativede_mergeDataSharing|1.0"
-    dms:
-    - "medizininformatik-initiativede_coordinateDataSharing|1.0"
-    - "medizininformatik-initiativede_executeDataSharing|1.0"
 - name: dsf_process_data_sharing
   version: "1.1.0.0"
   install_targets:
@@ -107,20 +88,22 @@ dsf_process_plugins_install:
     - "medizininformatik-initiativede_coordinateDataSharing|1.1"
     - "medizininformatik-initiativede_executeDataSharing|1.1"
 - name: dsf_process_data_transfer
-  version: "1.0.3.1"
+  version: "1.1.0.1"
   install_targets:
   - diz
   - dms
   - fdpg
   process_excluded:
     diz:
-    - "medizininformatik-initiativede_dataReceive|1.0"
+    - "medizininformatik-initiativede_dataReceive|1.1"
     dms:
-    - "medizininformatik-initiativede_dataSend|1.0"
+    - "medizininformatik-initiativede_dataSend|1.1"
     fdpg:
-    - "medizininformatik-initiativede_dataSend|1.0"
+    - "medizininformatik-initiativede_dataSend|1.1"
 additional_keycloak_user:
 - password_file: "{{ storage_path }}/secrets/dev/keycloak/keycloak-user-fdpgplusdev.password"
   username: fdpgplusdev
   first_name: Developer
   last_name: FDPG+
+additional_keycloak_client:
+- client_id: "{{ blaze_auth_client_id }}"

@@ -1,13 +1,11 @@
 ---
 # tasks file for fdpg-keycloak
-- name: Checkout FDPG Deployment
+- name: Keycloak - Checkout FDPG Deployment
   include_role:
     name: common
     tasks_from: checkout-deploy-repo
-  vars:
-    feasibility_deploy_version: "{{ deploy_version }}"
 
-- name: Get Certificate and Key from Storage
+- name: Keycloak - Get Certificate and Key from Storage
   include_role:
     name: common
     tasks_from: get-storage-file
@@ -21,13 +19,13 @@
     dest: "{{ secrets_path }}/fdpg.{{ env }}.ffg.de.key"
   when: not letsencrypt_enabled
 
-- name: Set Certificate and Key Path Variables
+- name: Keycloak - Set Certificate and Key Path Variables
   set_fact:
     certificate_path: "{{ secrets_path }}/fdpg.{{ env }}.ffg.de.crt"
     private_key_path: "{{ secrets_path }}/fdpg.{{ env }}.ffg.de.key"
   when: not letsencrypt_enabled
 
-- name: Get Certificate and Key from LetsEncrypt
+- name: Keycloak - Get Certificate and Key from LetsEncrypt
   include_role:
     name: common
     tasks_from: certbot
@@ -42,20 +40,20 @@
     - "{{ deploy_path }}/proxy-docker-compose.yml"
   when: letsencrypt_enabled
 
-- name: Get Keycloak environment config stats
+- name: Keycloak - Get Keycloak environment config stats
   stat:
-    path: "{{ deploy_path }}/feasibility-portal/keycloak/.env"
+    path: "{{ deploy_path }}/data-portal/keycloak/.env"
   register: keycloak_env
 
-- name: Get Keycloak default environment config stats
+- name: Keycloak - Get Keycloak default environment config stats
   stat:
-    path: "{{ deploy_path }}/feasibility-portal/keycloak/.env.default"
+    path: "{{ deploy_path }}/data-portal/keycloak/.env.default"
   register: keycloak_env_default
 
-- name: Copy Keycloak default environment config
+- name: Keycloak - Copy Keycloak default environment config
   copy:
-    src: "{{ deploy_path }}/feasibility-portal/keycloak/.env.default"
-    dest: "{{ deploy_path }}/feasibility-portal/keycloak/.env"
+    src: "{{ deploy_path }}/data-portal/keycloak/.env.default"
+    dest: "{{ deploy_path }}/data-portal/keycloak/.env"
     owner: ubuntu
     group: ubuntu
     mode: u+rw,g-wx,o-rwx
@@ -69,38 +67,38 @@
     kc_test_user_password: "{{ lookup('file', storage_path + '/secrets/' + env + '/keycloak/keycloak-user-test.password') }}"
   changed_when: false
 
-- name: Setup Keycloak
+- name: Keycloak - Setup Keycloak
   lineinfile:
-    path: "{{ deploy_path }}/feasibility-portal/keycloak/.env"
+    path: "{{ deploy_path }}/data-portal/keycloak/.env"
     regexp: "{{ item.regexp }}"
     line: "{{ item.line }}"
   loop:
-  - regexp: '^FEASIBILITY_KC_DB_PW='
-    line:    "FEASIBILITY_KC_DB_PW={{ kc_db_password }}"
-  - regexp: '^FEASIBILITY_KC_ADMIN_PW='
-    line:    "FEASIBILITY_KC_ADMIN_PW={{ kc_admin_password }}"
-  - regexp: '^FEASIBILITY_KC_HTTP_RELATIVE_PATH='
-    line:    "FEASIBILITY_KC_HTTP_RELATIVE_PATH=/"
-  - regexp: '^FEASIBILITY_KC_HOSTNAME_URL='
-    line:    'FEASIBILITY_KC_HOSTNAME_URL=https://{{ fdpg_auth_domain }}'
-  - regexp: '^FEASIBILITY_KC_HOSTNAME_ADMIN_URL='
-    line:    'FEASIBILITY_KC_HOSTNAME_ADMIN_URL=https://{{ fdpg_auth_domain }}'
+  - regexp: '^KC_DB_PW='
+    line:    "KC_DB_PW={{ kc_db_password }}"
+  - regexp: '^KC_BOOTSTRAP_ADMIN_PASSWORD='
+    line:    "KC_BOOTSTRAP_ADMIN_PASSWORD={{ kc_admin_password }}"
+  - regexp: '^KC_HTTP_RELATIVE_PATH='
+    line:    "KC_HTTP_RELATIVE_PATH=/"
+  - regexp: '^KC_HOSTNAME='
+    line:    'KC_HOSTNAME=https://{{ fdpg_auth_domain }}'
+  - regexp: '^KC_HOSTNAME_ADMIN='
+    line:    'KC_HOSTNAME_ADMIN=https://{{ fdpg_auth_domain }}'
 
-- name: Set base url in init config
+- name: Keycloak - Set base url in init config
   replace:
-    path: "{{ deploy_path }}/feasibility-portal/keycloak/init/feasibility-realm.json"
+    path: "{{ deploy_path }}/data-portal/keycloak/init/dataportal-realm.json"
     regexp: 'https://localhost'
     replace: "https://{{ fdpg_portal_domain }}"
 
-- name: Start Keycloak Service
+- name: Keycloak - Start Keycloak service
   community.docker.docker_compose_v2:
     project_name: keycloak
-    project_src: "{{ deploy_path }}/feasibility-portal/keycloak"
+    project_src: "{{ deploy_path }}/data-portal/keycloak"
     files:
     - docker-compose.yml
   register: keycloak_docker
 
-- name: Copy Proxy configuration
+- name: Keycloak - Copy proxy configuration
   template:
     src: nginx.conf.j2
     dest: "{{ deploy_path }}/nginx.conf"
@@ -108,7 +106,7 @@
     group: ubuntu
     mode: u=rw,g=r,o=r
 
-- name: Copy Proxy docker-compose.yml
+- name: Keycloak - Copy proxy docker-compose.yml
   template:
     src: proxy-docker-compose.yml
     dest: "{{ deploy_path }}/proxy-docker-compose.yml"
@@ -116,14 +114,14 @@
     group: ubuntu
     mode: u=rw,g=r,o=r
 
-- name: Start Proxy
+- name: Keycloak - Start proxy
   community.docker.docker_compose_v2:
     project_name: keycloak
     project_src: "{{ deploy_path }}"
     files:
     - proxy-docker-compose.yml
 
-- name: Wait for Keycloak
+- name: Keycloak - Wait for Keycloak
   uri:
     url: "https://{{ fdpg_auth_domain }}"
     method: GET
@@ -133,7 +131,7 @@
   retries: 12 # 12 * 5s = 60s
   delay: 5 # Every 5 seconds
 
-- name: Create Test User
+- name: Keycloak - Create test user
   include_tasks: create-user.yml
   vars:
     admin_password: "{{ kc_admin_password }}"
@@ -141,12 +139,11 @@
     first_name: "Test"
     last_name: "User"
     email: "foo@bar.baz"
-    password_file: "{{ kc_test_user_password }}"
-    roles:
-    - name: "FeasibilityUser"
-      id: "51cb7b69-d269-4872-b832-2d326e2e8658"
+    user_password: "{{ kc_test_user_password }}"
+    kc_roles:
+    - name: "DataportalUser"
 
-- name: Create Additional Users
+- name: Keycloak - Create additional users
   include_tasks: create-user.yml
   vars:
     admin_password: "{{ kc_admin_password }}"
@@ -154,13 +151,22 @@
     first_name: "{{ kc_user.first_name }}"
     last_name: "{{ kc_user.last_name }}"
     email: "{{ kc_user.username }}@bar.baz"
-    password: "{{ lookup('file', kc_user.password_file) }}"
-    roles:
-    - name: "FeasibilityUser"
-      id: "51cb7b69-d269-4872-b832-2d326e2e8658"
-  loop: "{{ additional_keycloak_user }}"
+    user_password: "{{ lookup('file', kc_user.password_file) }}"
+    kc_roles:
+    - name: "DataportalUser"
+  loop: "{{ additional_keycloak_user | default([]) }}"
   loop_control:
     loop_var: kc_user
   when: additional_keycloak_user is iterable
+
+- name: Keycloak - Create additional clients
+  include_tasks: create-client.yml
+  vars:
+    admin_password: "{{ kc_admin_password }}"
+    client_id: "{{ kc_client.client_id }}"
+  loop: "{{ additional_keycloak_client | default([]) }}"
+  loop_control:
+    loop_var: kc_client
+  when: additional_keycloak_client is iterable
 
 

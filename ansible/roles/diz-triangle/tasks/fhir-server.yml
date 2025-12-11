@@ -7,9 +7,47 @@
     apt:
       name:
       - zip
+      - openssl
       state: present
       update_cache: yes
 
+  - name: FHIR Server - Create folders
+    file:
+      path: "{{ secrets_path }}"
+      state: directory
+      owner: "{{ deploy_user }}"
+      group: "{{ deploy_user }}"
+      mode: "777"
+
+  - name: FHIR Server - Upload secrets
+    include_role:
+      name: common
+      tasks_from: get-storage-file
+    vars:
+      storage_file_path: "{{ item.src }}"
+      host_file_path: "{{ item.dest }}"
+    loop:
+    - src:  "secrets/{{ env }}/domain/trusted_cas.pem"
+      dest: "{{ secrets_path }}/trusted_cas.pem"
+
+  - name: FHIR Server - Generate Trusted CAs PKCS#12 TrustStore
+    command:
+      cmd: |
+        openssl pkcs12 -export -keypbe NONE -certpbe NONE -nomaciter
+                       -passout pass:password
+                       -jdktrust anyExtendedKeyUsage
+                       -in {{ secrets_path }}/trusted_cas.pem
+                       -out {{ secrets_path }}/trusted_cas.p12
+      creates: "{{ secrets_path }}/trusted_cas.p12"
+
+  - name: FHIR Server - Set TrustStore File Permissions
+    file:
+      path: "{{ secrets_path }}/trusted_cas.p12"
+      state: file
+      owner: "{{ deploy_user }}"
+      group: "{{ deploy_user }}"
+      mode: "644"
+            
   - name: FHIR Server - Get environment config stats
     stat:
       path: "{{ project_path }}/.env"
@@ -30,7 +68,34 @@
       remote_src: true
     when: fhir_env.stat.exists == false or fhir_env.stat.ctime < fhir_env_default.stat.ctime
 
-  - name: FHIR Server - Setup evnironment variables
+  - name: FHIR Server - Ensure persistent AUTH_SECRET exists
+    block:
+    - name: Check for existing AUTH_SECRET file
+      stat:
+        path: "{{ secrets_path }}/auth_secret"
+      register: auth_secret_file
+
+    - name: Create AUTH_SECRET file (only if missing)
+      copy:
+        dest: "{{ secrets_path }}/auth_secret"
+        content: "{{ lookup('password', '/dev/null length=40 chars=ascii_letters,digits') }}"
+        owner: "{{ deploy_user }}"
+        group: "{{ deploy_user }}"
+        mode: "0600"
+      when: auth_secret_file.stat.exists == false
+
+    - name: Read AUTH_SECRET from remote file
+      slurp:
+        src: "{{ secrets_path }}/auth_secret"
+      register: auth_secret_file_content
+      changed_when: false
+
+    - name: Set fact auth_secret from file
+      set_fact:
+        auth_secret: "{{ auth_secret_file_content.content | b64decode }}"
+      changed_when: false
+
+  - name: FHIR Server - Setup environment variables
     include_role:
       name: common
       tasks_from: set-env
@@ -39,36 +104,62 @@
       variables:
       - name: PORT_FHIR_SERVER_LOCALHOST
         value: "127.0.0.1:8081"
-      - name: FHIR_SERVER_BASE_URL
-        value: "{{ 'http://fhir-server:8080' if feasibility_evaluation_strategy == 'structured-query' else 'https://' ~ lookup('vars', 'diz_' + diz_instance + '_fhir_domain' ) }}"
-      - name: FHIR_SERVER_OPENID_PROVIDER_URL
-        value: ""
-      - name: FHIR_SERVER_OPENID_CLIENT_TRUST_STORE_PASS
-        value: ""
-
-  - name: FHIR Server - Remove OpenID configuration
-    lineinfile:
-      path: "{{ project_path }}/docker-compose.yml"
-      regexp: "^\\s*OPENID_.*"
-      state: absent
+      - name: BASE_URL
+        value: "http://fhir-server:8080" #"{{ 'http://fhir-server:8080' if feasibility_evaluation_strategy == 'structured-query' else 'https://' ~ lookup('vars', 'diz_' + diz_instance + '_fhir_domain' ) }}"
+      - name: ORIGIN
+        value: "https://{{ lookup('vars', 'diz_' + diz_instance + '_fhir_domain') }}"
+      - name: OPENID_PROVIDER_URL
+        value: "{{ issuer_url }}"
+      - name: OPENID_CLIENT_TRUST_STORE_PASS
+        value: "password"
+      - name: LOCAL_OPENID_CLIENT_TRUST_STORE
+        value: "{{ secrets_path }}/trusted_cas.p12"
+      - name: AUTH_ISSUER 
+        value: "{{ issuer_url }}"
+      - name: AUTH_CLIENT_ID 
+        value: "{{ client_id }}"
+      - name: AUTH_CLIENT_SECRET 
+        value: "{{ client_secret }}"
+      - name: CA_CERT 
+        value: "{{ secrets_path }}/trusted_cas.pem"
+      - name: AUTH_SECRET
+        value: "{{ auth_secret }}"
 
   - name: FHIR Server - Start container
     community.docker.docker_compose_v2:
       project_src: "{{ project_path }}"
       project_name: "{{ project_name }}"
-      services:
-      - fhir-server
     environment:
       COMPOSE_IGNORE_ORPHANS: "1"
 
   - name: FHIR Server - Wait for FHIR server
     uri:
-      url: "http://localhost:8081/fhir/metadata"
+      url: "http://localhost:8081/health"
       method: GET
     register: _result
     until: _result.status == 200
     retries: 12 # 12 * 10s = 120s
     delay: 10 # Every 5 seconds
+
+  - name: FHIR Server - Read test user password
+    set_fact:
+      kc_test_user_password: "{{ lookup('file', storage_path + '/secrets/' + env + '/keycloak/keycloak-user-test.password') }}"
+    changed_when: false
+      
+  - name: FHIR Server - Get Keycloak Auth Token
+    uri:
+      url: "{{ issuer_url }}/protocol/openid-connect/token"
+      method: POST
+      validate_certs: false
+      body: "grant_type=client_credentials&client_id={{ client_id }}&client_secret={{ client_secret }}"
+      status_code: 200
+      headers:
+        Content-Type: "application/x-www-form-urlencoded"
+    register: access_token_result
+
+  - name: FHIR Server - Extract Keycloak Auth Token
+    set_fact:
+      access_token_bearer: "{{ access_token_result.json | json_query('access_token') }}"
 
   - name: DSF FHIR - Get patient count
     uri:
@@ -77,14 +168,46 @@
       method: GET
       headers:
         Accept: application/fhir+json
+        Authorization: "Bearer {{ access_token_bearer }}"
       timeout: 10
-    register: patient_count
     failed_when: patient_count.status != 200 or patient_count.json is undefined
+    register: patient_count
 
-  - name: DSF FHIR - Upload test data
+  - name: DSF FHIR - Upload MII test data
     shell:
       cmd: |
         ./get-mii-testdata.sh
         ./upload-testdata.sh
       chdir: "{{ project_path }}/.."
     when: patient_count.json and patient_count.json.total == 0
+    failed_when: false
+    register: mii_testdata_upload
+
+  - name: DSF FHIR - Get and upload KDS test data
+    when: patient_count.json.total is defined and patient_count.json.total == 0
+    block:
+    - name: DSF FHIR - Get KDS test data
+      unarchive:
+        src: https://github.com/medizininformatik-initiative/mii-testdata/releases/download/v1.0.1/kds-testdata-2024.0.1.zip
+        dest: "{{ project_path }}"
+        remote_src: true
+        creates: "{{ project_path }}/kds-testdata-2024.0.1"
+    
+    - name: FHIR Server - Read KDS bundle from remote host
+      slurp:
+        src: "{{ project_path }}/kds-testdata-2024.0.1/resources/Bundle-mii-exa-test-data-bundle.json"
+      changed_when: false
+      register: kds_bundle
+        
+    - name: FHIR Server - Upload KDS test data
+      uri:
+        url: "http://localhost:8081/fhir"
+        method: POST
+        headers:
+          Content-Type: "application/fhir+json"
+          Authorization: "Bearer {{ access_token_bearer }}"
+        body: "{{ kds_bundle.content | b64decode }}"
+        status_code: [200, 201]
+        timeout: 30
+      failed_when: kds_upload.status not in [200, 201]
+      register: kds_upload

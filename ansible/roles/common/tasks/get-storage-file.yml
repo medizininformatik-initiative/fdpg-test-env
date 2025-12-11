@@ -1,10 +1,15 @@
 ---
 
+- name: Ensures {{ host_file_path | dirname | quote }} directory exists
+  file: 
+    path: "{{ host_file_path | dirname | quote }}"
+    state: directory
+    
 - name: Upload to '{{ host_file_path }}'
   copy:
     force: true
-    src: "{{ storage_path }}/{{ storage_file_path|quote }}"
-    dest: "{{ host_file_path|quote }}"
+    src: "{{ storage_path }}/{{ storage_file_path | quote }}"
+    dest: "{{ host_file_path| quote }}"
     owner: "{{ deploy_user }}"
     group: "{{ deploy_user }}"
     mode: '644'

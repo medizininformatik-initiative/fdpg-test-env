@@ -24,6 +24,19 @@
       add_authorized_keys:
       - rwettstein
 
+- name: Add additional ssh keys to Dev DIZ-1
+  hosts:
+  - dev_diz_1
+  roles:
+  - role: user-ubuntu
+    vars:
+      add_authorized_keys:
+      - bschaffer
+      - ltriefenbach
+      - mfolz
+      - pbehrend
+      - poverton
+
 - name: Setup DIZ internal network
   hosts:
   - diz_dsf_bpe

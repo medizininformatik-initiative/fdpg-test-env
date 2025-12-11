@@ -1,0 +1,29 @@
+- name: Terminology Server
+  tags: terminology-server
+  block:
+  - name: Terminology Server - Get environment config stats
+    stat:
+      path: "{{ project_path }}/.env"
+    register: terminology_server_env
+
+  - name: Terminology Server - Get default environment config stats
+    stat:
+      path: "{{ project_path }}/.env.default"
+    register: terminology_server_env_default
+
+  - name: Terminology Server - Copy default environment config
+    copy:
+      src: "{{ project_path }}/.env.default"
+      dest: "{{ project_path }}/.env"
+      owner: ubuntu
+      group: ubuntu
+      mode: u+rw,g-wx,o-rwx
+      remote_src: true
+    when: terminology_server_env.stat.exists == false or terminology_server_env.stat.ctime < terminology_server_env_default.stat.ctime
+
+  - name: Terminology Server - Start container
+    community.docker.docker_compose_v2:
+      project_src: "{{ project_path }}"
+      project_name: "{{ project_name }}"
+    environment:
+      COMPOSE_IGNORE_ORPHANS: "1"

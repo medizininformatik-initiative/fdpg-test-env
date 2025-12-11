@@ -46,6 +46,8 @@
       - "{{ certificates_path }}:/etc/letsencrypt"
       - "/tmp/letsencrypt:/var/log/letsencrypt"
       - "/tmp/letsencrypt:/var/lib/letsencrypt"
+      detach: false
+    failed_when: false
     tags:
     - certbot
 
@@ -89,7 +91,7 @@
       sed 's#/etc/letsencrypt#{{ certificates_path }}#'
     register: cert_path
     changed_when: false
-
+    
   - name: Certbot - Get private key path
     shell: |
       docker run --rm \

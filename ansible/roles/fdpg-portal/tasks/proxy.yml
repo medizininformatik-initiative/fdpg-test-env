@@ -42,7 +42,6 @@
       certbot_register_domain: "{{ fdpg_portal_domain }}"
       certbot_register_sans:
       - "{{ fdpg_portal_dsf_domain }}"
-      - "{{ fdpg_portal_aktin_domain }}"
       certificates_path: "{{ secrets_path }}/letsencrypt"
       certbot_user_id: 101
       certbot_group_id: 101
@@ -76,7 +75,7 @@
     lineinfile:
       path: "{{ project_path }}/docker-compose.yml"
       insertafter: '^\s*volumes:$'
-      line: "      - ${PROXY_TRUSTED_CA_CERTIFICATE_PATH:-../auth/trusted_cas.pem}:/etc/nginx/certs/ca.pem"
+      line: "      - ${DATA_PORTAL_PROXY_TRUSTED_CA_CERTIFICATE_PATH:-../auth/trusted_cas.pem}:/etc/nginx/certs/ca.pem"
 
   - name: FDPG Proxy - Setup evnironment variables
     include_role:
@@ -85,7 +84,7 @@
     vars:
       path: "{{ project_path }}/.env"
       variables:
-      - name: FEASIBILITY_PORTAL_PROXY_NGINX_CONFIG
+      - name: DATA_PORTAL_PROXY_NGINX_CONFIG
         value: "{{ project_path }}/nginx.conf"
 
   - name: FDPG Proxy - Start Proxy

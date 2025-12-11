@@ -1,5 +1,5 @@
 [
-  {%- for role in (roles | list | flatten) %}
+  {%- for role in (kc_roles_with_id | list | flatten) %}
     {
       "name": "{{ role.name }}",
       "id": "{{ role.id }}"

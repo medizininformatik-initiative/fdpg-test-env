@@ -136,3 +136,18 @@
     retries: 12 # 12 * 10s = 120s
     delay: 10 # Every 5 seconds
 
+  - name: FDPG DSF - Upload Allow List
+    uri:
+      remote_src: true
+      url: "https://{{ fdpg_portal_dsf_domain }}/fhir/"
+      method: POST
+      ca_path: "{{ secrets_path }}/trusted_cas.pem"
+      client_cert: "{{ secrets_path }}/bpe.fdpg.{{ env }}.ffg.de.crt"
+      client_key: "{{ secrets_path }}/bpe.fdpg.{{ env }}.ffg.de.key"
+      headers:
+        Content-Type: application/fhir+xml
+      src: "{{ project_path }}/allowlist.xml"
+      timeout: 60
+      status_code:
+      - 200
+      - 201

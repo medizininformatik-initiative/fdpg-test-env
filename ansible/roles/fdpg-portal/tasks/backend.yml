@@ -6,6 +6,7 @@
     copy:
       src: "{{ project_path }}/.env.default"
       dest: "{{ project_path }}/.env"
+      force: false
       remote_src: true
 
   - name: FDPG Backend - Upload secrets
@@ -16,10 +17,30 @@
       storage_file_path: "{{ item.src }}"
       host_file_path: "{{ item.dest }}"
     loop:
-    - src:  "secrets/{{ env }}/dsf/fdpg/backend.fdpg.{{ env }}.ffg.de.p12"
-      dest: "{{ secrets_path }}/backend.fdpg.{{ env }}.ffg.de.p12"
+    - src:  "secrets/{{ env }}/dsf/fdpg/bpe.fdpg.{{ env }}.ffg.de.crt"
+      dest: "{{ project_path }}/../auth/backend.fdpg.{{ env }}.ffg.de.crt"
+    - src:  "secrets/{{ env }}/dsf/fdpg/bpe.fdpg.{{ env }}.ffg.de.key"
+      dest: "{{ project_path }}/../auth/backend.fdpg.{{ env }}.ffg.de.key"
     - src:  "secrets/{{ env }}/domain/trusted_cas.pem"
-      dest: "{{ secrets_path }}/trusted_cas.pem"
+      dest: "{{ project_path }}/../auth/trusted_cas.pem"
+
+  - name: FDPG Backend - Read 'trusted_cas.pem'
+    set_fact:
+      cas_content: "{{ lookup('file', storage_path + '/secrets/' + env + '/domain/trusted_cas.pem') }}"
+
+  - name: FDPG Backend - Split CAs in list
+    set_fact:
+      ca_list: "{{ cas_content | regex_findall('(?s)-----BEGIN CERTIFICATE-----.*?-----END CERTIFICATE-----') }}"
+
+  - name: FDPG Backend - Write each certificate to its own PEM file
+    copy:
+      content: "{{ item }}"
+      dest: "{{ project_path }}/../auth/trusted_ca_{{ '%02d' % (idx + 1) }}.pem"
+      mode: '0644'
+    loop: "{{ ca_list }}"
+    loop_control:
+      index_var: idx
+      label: "trusted_ca_{{ '%02d' % (idx + 1) }}.pem"
 
   - name: FDPG Backend - Setup evnironment variables
     include_role:
@@ -28,38 +49,42 @@
     vars:
       path: "{{ project_path }}/.env"
       variables:
-      - name: DATAPORTAL_BACKEND_API_BASE_URL
-        value:   "https://{{ fdpg_portal_domain }}/api/"
-      - name: DATAPORTAL_BACKEND_ALLOWED_ORIGINS
+      - name: API_BASE_URL
         value:   "https://{{ fdpg_portal_domain }}"
-      - name: DATAPORTAL_BACKEND_BROKER_CLIENT_DIRECT_ENABLED
+      - name: ALLOWED_ORIGINS
+        value:   "https://{{ fdpg_portal_domain }}"
+      - name: BROKER_CLIENT_DIRECT_ENABLED
         value:   "false"
-      - name: DATAPORTAL_BACKEND_AKTIN_ENABLED
+      - name: BROKER_CLIENT_AKTIN_ENABLED
         value:   "false"
-      - name: DATAPORTAL_BACKEND_DSF_ENABLED
+      - name: BROKER_CLIENT_DSF_ENABLED
         value:   "true"
-      - name: DATAPORTAL_BACKEND_CERTS_PATH
-        value: "{{ secrets_path }}"
-      - name: DATAPORTAL_BACKEND_DSF_CACERT
-        value:   "/opt/dataportal-security/trusted_cas.pem"
-      - name: DATAPORTAL_BACKEND_DSF_DSF_SECURITY_KEYSTORE_P12FILE
-        value:   "/opt/dataportal-security/backend.fdpg.{{ env }}.ffg.de.p12"
-      - name: DATAPORTAL_BACKEND_DSF_ORGANIZATION_ID
+      - name: DSF_SECURITY_CACERT
+        value:   "/opt/dataportal-backend/certs/trusted_cas.pem"
+      - name: DSF_SECURITY_CLIENT_CERTIFICATE_FILE
+        value:   "/opt/dataportal-backend/certs/backend.fdpg.{{ env }}.ffg.de.crt"
+      - name: DSF_SECURITY_CLIENT_KEY_FILE
+        value:   "/opt/dataportal-backend/certs/backend.fdpg.{{ env }}.ffg.de.key"
+      - name: DSF_ORGANIZATION_ID
         value:   "forschen-fuer-gesundheit.de"
-      - name: DATAPORTAL_BACKEND_DSF_WEBSERVICE_BASE_URL
+      - name: DSF_WEBSERVICE_BASE_URL
         value:   "https://{{ fdpg_portal_dsf_domain }}/fhir"
-      - name: DATAPORTAL_BACKEND_DSF_WEBSOCKET_URL
+      - name: DSF_WEBSOCKET_URL
         value:   "wss://{{ fdpg_portal_dsf_domain }}:443/fhir/ws"
-      - name: DATAPORTAL_BACKEND_KEYCLOAK_BASE_URL_ISSUER
+      - name: KEYCLOAK_BASE_URL_ISSUER
         value:   "https://{{ fdpg_auth_domain }}"
-      - name: DATAPORTAL_BACKEND_KEYCLOAK_BASE_URL_JWK
+      - name: KEYCLOAK_BASE_URL_JWK
         value:   "https://{{ fdpg_auth_domain }}"
-      - name: DATAPORTAL_BACKEND_CQL_TRANSLATE_ENABLED
+      - name: KEYCLOAK_REALM
+        value:   "{{ fdpg_auth_realm }}"
+      - name: CQL_TRANSLATE_ENABLED
         value:   "true"
-      - name: DATAPORTAL_BACKEND_LOG_LEVEL
+      - name: LOG_LEVEL
         value:   "debug"
-      - name: DATAPORTAL_BACKEND_PRIVACY_THRESHOLD_RESULTS
-        value:   "10"
+      - name: PRIVACY_THRESHOLD_RESULTS
+        value:   "0"
+      - name: DATAPORTAL_ES_INIT_EXIT_ON_EXISTING_INDICES
+        value: "{{ 'false' if (force_es_init | default(false)) else 'true' }}"
 
   - name: FDPG Backend - Start containers
     community.docker.docker_compose_v2:

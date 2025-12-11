@@ -78,6 +78,6 @@ secrets:
   ssl_ca_certificate_file.pem:
     file: {{ secrets_path }}/trusted_cas.pem
   trust_store.jks:
-    file: {{ secrets_path}}/root-ca.local.jks
+    file: {{ secrets_path}}/trusted_cas.p12
   fhir_server.htpasswd.password:
     file: {{ secrets_path }}/diz-{{ instance }}-triangle.local.htpasswd.password

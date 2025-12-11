@@ -41,7 +41,6 @@
   - name: Reverse Proxy - Set Module Variables
     set_fact:
       domain: "{{ lookup('vars', 'diz_' + diz_instance + '_fhir_domain' ) }}"
-    when: letsencrypt_enabled
 
   - name: Reverse Proxy - Get Certificate and Key from LetsEncrypt
     include_role:
@@ -85,26 +84,20 @@
     vars:
       path: "{{ project_path }}/.env"
       variables:
-      - name: FEASIBILITY_TRIANGLE_REV_PROXY_PORT
+      - name: DATA_NODE_REV_PROXY_PORT
         value: "443"
-      - name: FEASIBILITY_TRIANGLE_REV_PROXY_CERTIFICATE_FILE
-        value: "{{ secrets_path }}/diz-{{ diz_instance }}-triangle.local.crt"
-      - name: FEASIBILITY_TRIANGLE_REV_PROXY_CERTIFICATE_PRIVATE_KEY_FILE
-        value: "{{ secrets_path }}/diz-{{ diz_instance }}-triangle.local.key"
-      - name: FEASIBILITY_TRIANGLE_REV_PROXY_HTTP_PASSWORD_FILE
+      - name: DATA_NODE_REV_PROXY_CERTIFICATE_FILE
+        value: "{{ certificate_path }}"
+      - name: DATA_NODE_REV_PROXY_CERTIFICATE_PRIVATE_KEY_FILE
+        value: "{{ private_key_path }}"
+      - name: DATA_NODE_REV_PROXY_HTTP_PASSWORD_FILE
         value: "{{ secrets_path }}/diz-{{ diz_instance }}-triangle.local.htpasswd"
       - name: FHIR_SERVER_HOSTNAME
-        value: "triangle.diz.local"
+        value: "{{ domain }}"
       - name: FLARE_HOSTNAME
-        value: "triangle.diz.local"
-      - name: FEASIBILITY_TRIANGLE_REV_PROXY_NGINX_CONFIG
+        value: "{{ domain }}"
+      - name: DATA_NODE_REV_PROXY_NGINX_CONFIG
         value: "./context-paths.nginx.conf"
-
-  - name: Reverse Proxy - Disable Blaze Frontend
-    replace:
-      path: "{{ project_path }}/context-paths.nginx.conf"
-      regexp: "^(\\s*)default http://fhir-server-frontend:3000;.*$"
-      replace: "\\1default http://fhir-server:8080;"
 
   - name: Reverse Proxy - Start container
     community.docker.docker_compose_v2:
