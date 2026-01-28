@@ -59,16 +59,16 @@ resource "hcloud_network_subnet" "intern" {
 resource "hcloud_primary_ip" "dsf_fhir" {
   name          = terraform.workspace == "default" ? format("diz-%d-dsf-fhir", var.number) : format("%s-diz-%d-dsf-fhir", terraform.workspace, var.number)
   type          = "ipv4"
-  datacenter    = "fsn1-dc14"
+  datacenter    = "nbg1-dc3"
   assignee_type = "server"
   auto_delete   = false
 }
 
 resource "hcloud_server" "dsf_fhir" {
   name         = terraform.workspace == "default" ? format("diz-%d-dsf-fhir", var.number) : format("%s-diz-%d-dsf-fhir", terraform.workspace, var.number)
-  image        = "ubuntu-22.04"
-  server_type  = "cx22"
-  datacenter   = "fsn1-dc14"
+  image        = "ubuntu-24.04"
+  server_type  = "cx23"
+  datacenter   = "nbg1-dc3"
   ssh_keys     = var.ssh_keys
   firewall_ids = [hcloud_firewall.dmz.id]
 
@@ -82,7 +82,7 @@ resource "hcloud_server" "dsf_fhir" {
 resource "hcloud_primary_ip" "dsf_bpe" {
   name          = terraform.workspace == "default" ? format("diz-%d-dsf-bpe", var.number) : format("%s-diz-%d-dsf-bpe", terraform.workspace, var.number)
   type          = "ipv4"
-  datacenter    = "fsn1-dc14"
+  datacenter    = "nbg1-dc3"
   assignee_type = "server"
   auto_delete   = false
 }
@@ -90,16 +90,16 @@ resource "hcloud_primary_ip" "dsf_bpe" {
 resource "hcloud_primary_ip" "triangle" {
   name          = terraform.workspace == "default" ? format("diz-%d-triangle", var.number) : format("%s-diz-%d-dsf-triangle", terraform.workspace, var.number)
   type          = "ipv4"
-  datacenter    = "fsn1-dc14"
+  datacenter    = "nbg1-dc3"
   assignee_type = "server"
   auto_delete   = false
 }
 
 resource "hcloud_server" "dsf_bpe" {
   name         = terraform.workspace == "default" ? format("diz-%d-dsf-bpe", var.number) : format("%s-diz-%d-dsf-bpe", terraform.workspace, var.number)
-  image        = "ubuntu-22.04"
-  server_type  = "cx22"
-  datacenter   = "fsn1-dc14"
+  image        = "ubuntu-24.04"
+  server_type  = "cx23"
+  datacenter   = "nbg1-dc3"
   ssh_keys     = var.ssh_keys
   firewall_ids = [hcloud_firewall.intern.id]
 
@@ -117,9 +117,9 @@ resource "hcloud_server" "dsf_bpe" {
 
 resource "hcloud_server" "triangle" {
   name        = terraform.workspace == "default" ? format("diz-%d-triangle", var.number) : format("%s-diz-%d-dsf-triangle", terraform.workspace, var.number)
-  image       = "ubuntu-22.04"
-  server_type = "cpx21"
-  datacenter  = "fsn1-dc14"
+  image       = "ubuntu-24.04"
+  server_type = terraform.workspace == "dev" && var.number == 1 ? "cpx42" : "cx33"
+  datacenter  = "nbg1-dc3"
   ssh_keys    = var.ssh_keys
 
   network {

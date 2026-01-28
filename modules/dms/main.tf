@@ -34,16 +34,16 @@ resource "hcloud_firewall" "dms" {
 resource "hcloud_primary_ip" "dsf_fhir" {
   name          = terraform.workspace == "default" ? "dms-dsf-fhir" : format("%s-dms-dsf-fhir", terraform.workspace)
   type          = "ipv4"
-  datacenter    = "fsn1-dc14"
+  datacenter    = "nbg1-dc3"
   assignee_type = "server"
   auto_delete   = false
 }
 
 resource "hcloud_server" "dsf_fhir" {
   name         = terraform.workspace == "default" ? "dms-dsf-fhir" : format("%s-dms-dsf-fhir", terraform.workspace)
-  image        = "ubuntu-22.04"
-  server_type  = "cx41"
-  datacenter   = "fsn1-dc14"
+  image        = "ubuntu-24.04"
+  server_type  = "cx33"
+  datacenter   = "nbg1-dc3"
   ssh_keys     = var.ssh_keys
   firewall_ids = [hcloud_firewall.dms.id]
 

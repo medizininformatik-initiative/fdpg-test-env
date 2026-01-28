@@ -51,39 +51,39 @@ Everyone has to add this to his `~/.ssh/config` because Ansible works with this 
 ```text
 # FDPG Development Environment
 Host dev-fdpg
-Hostname 91.107.210.198
+Hostname 46.225.51.107
 User ubuntu
 
 Host dev-fdpg-keycloak
-Hostname 188.34.191.244
+Hostname 46.225.52.32
 User ubuntu
 
 Host dev-diz-1-dsf-fhir
-Hostname 88.198.173.77
+Hostname 167.235.59.131
 User ubuntu
 
 Host dev-diz-1-dsf-bpe
-Hostname 188.34.181.226
+Hostname 46.225.60.237
 User ubuntu
 
 Host dev-diz-1-triangle
-Hostname 128.140.62.38
+Hostname 46.225.60.68
 User ubuntu
 
 Host dev-diz-2-dsf-fhir
-Hostname 128.140.80.17
+Hostname 46.225.52.139
 User ubuntu
 
 Host dev-diz-2-dsf-bpe
-Hostname 138.201.116.210
+Hostname 46.225.49.212
 User ubuntu
 
 Host dev-diz-2-triangle
-Hostname 5.75.240.43
+Hostname 46.225.51.140
 User ubuntu
 
 Host dev-dms-dsf-fhir
-HostName 128.140.60.107
+HostName 46.225.61.238
 User ubuntu
 
 # FDPG Test Environment
