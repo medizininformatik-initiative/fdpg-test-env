@@ -15,14 +15,38 @@ data "hcloud_ssh_key" "rwettstein" {
   name       = "Reto Wettstein"
 }
 
+data "hcloud_ssh_key" "poverton" {
+  name       = "Philip Overton"
+}
+
+data "hcloud_ssh_key" "ltriefenbach" {
+  name       = "Lucas Triefenbach"
+}
+
+data "hcloud_ssh_key" "mfolz" {
+  name       = "Michael Folz"
+}
+
+data "hcloud_ssh_key" "pbehrend" {
+  name       = "Paul Behrend"
+}
+
+data "hcloud_ssh_key" "bschaffer" {
+  name       = "Bastian Schaffer"
+}
+
 module "diz" {
   source   = "./modules/diz"
   number   = count.index + 1
   ssh_keys = [
     hcloud_ssh_key.akiel.id,
-    data.hcloud_ssh_key.mruehle.id,
+    data.hcloud_ssh_key.bschaffer.id,
     data.hcloud_ssh_key.jgruendner.id,
-    data.hcloud_ssh_key.rwettstein.id
+    data.hcloud_ssh_key.ltriefenbach.id,
+    data.hcloud_ssh_key.mfolz.id,
+    data.hcloud_ssh_key.mruehle.id,
+    data.hcloud_ssh_key.pbehrend.id,
+    data.hcloud_ssh_key.poverton.id
   ]
   count    = terraform.workspace == "test" || terraform.workspace == "dev" ? 2 : 0
 }
@@ -31,8 +55,10 @@ module "fdpg" {
   source   = "./modules/fdpg"
   ssh_keys = [
     hcloud_ssh_key.akiel.id,
-    data.hcloud_ssh_key.mruehle.id,
     data.hcloud_ssh_key.jgruendner.id,
+    data.hcloud_ssh_key.mfolz.id,
+    data.hcloud_ssh_key.mruehle.id,
+    data.hcloud_ssh_key.poverton.id,
     data.hcloud_ssh_key.rwettstein.id
   ]
   count    = terraform.workspace == "dev" ? 1 : 0
@@ -40,7 +66,12 @@ module "fdpg" {
 
 module "dms" {
   source   = "./modules/dms"
-  ssh_keys = [hcloud_ssh_key.akiel.id, data.hcloud_ssh_key.mruehle.id, data.hcloud_ssh_key.jgruendner.id]
+  ssh_keys = [
+    hcloud_ssh_key.akiel.id,
+    data.hcloud_ssh_key.jgruendner.id,
+    data.hcloud_ssh_key.mruehle.id,
+    data.hcloud_ssh_key.poverton.id
+  ]
 }
 
 module "monitoring" {
