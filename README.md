@@ -88,31 +88,31 @@ User ubuntu
 
 # FDPG Test Environment
 Host test-dms-dsf-fhir
-Hostname 162.55.171.40
+Hostname 46.225.125.11
 User ubuntu
 
 Host test-diz-1-dsf-fhir
-Hostname 49.12.77.194
+Hostname 46.225.128.190
 User ubuntu
 
 Host test-diz-1-dsf-bpe
-Hostname 128.140.80.15
+Hostname 46.225.129.139
 User ubuntu
 
 Host test-diz-1-triangle
-Hostname 167.235.246.101
+Hostname 46.225.132.85
 User ubuntu
 
 Host test-diz-2-dsf-fhir
-Hostname 128.140.89.16
+Hostname 46.225.138.83
 User ubuntu
 
 Host test-diz-2-dsf-bpe
-Hostname 49.12.215.228
+Hostname 46.225.137.88
 User ubuntu
 
 Host test-diz-2-triangle
-Hostname 128.140.95.12
+Hostname 46.225.135.82
 User ubuntu
 
 Host fdpg-monitoring
