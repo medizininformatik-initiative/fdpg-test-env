@@ -1,7 +1,7 @@
 services:
 
   db:
-    image: postgres:15
+    image: postgres:18
     restart: unless-stopped
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U liquibase_user -d bpe"]
@@ -11,7 +11,7 @@ services:
     volumes:
       - type: volume
         source: db-data
-        target: /var/lib/postgresql/data
+        target: /var/lib/postgresql
     environment:
       TZ: Europe/Berlin
       POSTGRES_PASSWORD_FILE: /run/secrets/db_liquibase.password
