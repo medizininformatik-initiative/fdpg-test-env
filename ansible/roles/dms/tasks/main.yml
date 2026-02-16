@@ -7,6 +7,7 @@
     bpe_process_path: "{{ deploy_path }}/bpe/process"
     fhir_log_path: "{{ deploy_path }}/fhir/logs"
     nginx_conf_path: "{{ deploy_path }}/nginx.conf"
+    db_init_script_path: "{{ deploy_path }}/db-init.sh"
     proxy_trusted_client_cas_path: "{{ secrets_path }}/trusted_cas.pem"
     client_certificate_path: "{{ secrets_path }}/bpe.dms.{{ env }}.ffg.de.crt"
     client_certificate_private_key_path: "{{ secrets_path }}/bpe.dms.{{ env }}.ffg.de.key"
@@ -132,21 +133,23 @@
 - name: DMS - Deploy service files
   template:
     src: "{{ item.src }}"
-    dest: "{{ deploy_path }}/{{ item.dest }}"
+    dest: "{{ item.dest }}"
     owner: "{{ deploy_user }}"
     group: "{{ deploy_user }}"
     mode: u=rw,g=r,o=r
   loop:
   - src: "docker-compose.yml.j2"
-    dest: "docker-compose.yml"
+    dest: "{{ deploy_path }}/docker-compose.yml"
   - src: "nginx.conf.j2"
-    dest: "nginx.conf"
+    dest: "{{ nginx_conf_path }}"
   - src: "dsf-bpe.env.default.j2"
-    dest: "bpe.env.default"
+    dest: "{{ deploy_path }}/bpe.env.default"
   - src: "dsf-fhir.env.default.j2"
-    dest: "fhir.env.default"
+    dest: "{{ deploy_path }}/fhir.env.default"
   - src: "allowlist.xml.j2"
-    dest: "allowlist.xml"
+    dest: "{{ deploy_path }}/allowlist.xml"
+  - src: "db-init.sh.j2"
+    dest: "{{ db_init_script_path }}"
 
 - name: DMS - Start services
   community.docker.docker_compose_v2:
