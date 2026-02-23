@@ -34,16 +34,16 @@ resource "hcloud_firewall" "fdpg" {
 resource "hcloud_primary_ip" "fdpg" {
   name          = terraform.workspace == "default" ? "fdpg" : format("%s-fdpg", terraform.workspace)
   type          = "ipv4"
-  datacenter    = "fsn1-dc14"
+  datacenter    = "nbg1-dc3"
   assignee_type = "server"
   auto_delete   = false
 }
 
 resource "hcloud_server" "fdpg" {
   name         = terraform.workspace == "default" ? "fdpg" : format("%s-fdpg", terraform.workspace)
-  image        = "ubuntu-22.04"
-  server_type  = "cx41"
-  datacenter   = "fsn1-dc14"
+  image        = "ubuntu-24.04"
+  server_type  = "cx33"
+  datacenter   = "nbg1-dc3"
   ssh_keys     = var.ssh_keys
   firewall_ids = [hcloud_firewall.fdpg.id]
 
@@ -57,16 +57,16 @@ resource "hcloud_server" "fdpg" {
 resource "hcloud_primary_ip" "fdpg_keycloak" {
   name          = terraform.workspace == "default" ? "fdpg-keycloak" : format("%s-fdpg-keycloak", terraform.workspace)
   type          = "ipv4"
-  datacenter    = "fsn1-dc14"
+  datacenter    = "nbg1-dc3"
   assignee_type = "server"
   auto_delete   = false
 }
 
 resource "hcloud_server" "fdpg-keycloak" {
   name         = terraform.workspace == "default" ? "fdpg-keycloak" : format("%s-fdpg-keycloak", terraform.workspace)
-  image        = "ubuntu-22.04"
-  server_type  = "cx11"
-  datacenter   = "fsn1-dc14"
+  image        = "ubuntu-24.04"
+  server_type  = "cx23"
+  datacenter   = "nbg1-dc3"
   ssh_keys     = var.ssh_keys
   firewall_ids = [hcloud_firewall.fdpg.id]
 

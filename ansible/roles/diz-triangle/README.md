@@ -1,4 +1,4 @@
-DIZ Triangle
+DIZ Data Node
 ============
 
 Setup a Datenintegrationszentrum (DIZ) [= data integration center]
@@ -17,7 +17,7 @@ Example Playbook
 
     - hosts: servers
       roles:
-         - diz-triangle
+         - diz-data-node
 
 License
 -------

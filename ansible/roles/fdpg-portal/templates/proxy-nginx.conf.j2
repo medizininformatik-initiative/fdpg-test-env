@@ -50,8 +50,8 @@ http {
         server_name {{ fdpg_portal_domain }};
 
         location / {
-            set $upstream dataportal-ui:8080;
-            proxy_pass http://$upstream$request_uri;
+            set $gui_upstream dataportal-ui:8080;
+            proxy_pass http://$gui_upstream$request_uri;
             proxy_set_header X-Forwarded-For   $proxy_add_x_forwarded_for;
             proxy_set_header X-Forwarded-Proto $scheme;
             proxy_set_header Host $host;
@@ -61,11 +61,23 @@ http {
             proxy_read_timeout 86400;
         }
 
-        location /api/ {
-            set $upstream dataportal-backend:8090;
-            proxy_pass http://$upstream$request_uri;
+        location ~ ^/api/(.*)$ {
+            set $backend_upstream dataportal-backend:8090;
+            proxy_pass http://$backend_upstream/api/$1$is_args$args;
             proxy_set_header X-Forwarded-Proto $scheme;
             proxy_set_header X-Forwarded-Host  $host;
+            proxy_buffer_size 8k;
+            proxy_request_buffering off;
+            client_max_body_size 100M;
+        }
+
+        location /.settings {
+            set $backend_upstream dataportal-backend:8090;
+            proxy_pass http://$backend_upstream/.settings;
+            proxy_set_header X-Forwarded-Proto $scheme;
+            proxy_set_header X-Forwarded-Host  $host;
+            proxy_buffer_size 8k;
+            proxy_request_buffering off;
         }
     }
 
@@ -81,8 +93,8 @@ http {
         location / {
             proxy_set_header     X-ClientCert $ssl_client_escaped_cert;
             client_max_body_size 10M;
-            set                  $upstream fhir-app:8080;
-            proxy_pass           http://$upstream$request_uri;
+            set                  $dsf_upstream fhir-app:8080;
+            proxy_pass           http://$dsf_upstream$request_uri;
             proxy_set_header     X-Forwarded-For   $proxy_add_x_forwarded_for;
             proxy_set_header     X-Forwarded-Proto $scheme;
             proxy_set_header     Host $host;

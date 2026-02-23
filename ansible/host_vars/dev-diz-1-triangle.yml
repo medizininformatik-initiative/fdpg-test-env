@@ -1,1 +1,3 @@
 feasibility_evaluation_strategy: "cql"
+enable_torch: true
+enable_terminology_server: true

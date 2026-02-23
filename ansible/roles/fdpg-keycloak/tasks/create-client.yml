@@ -1,0 +1,39 @@
+---
+- name: Keycloak - Get Keycloak auth token
+  uri:
+    url: https://{{ fdpg_auth_domain }}/realms/master/protocol/openid-connect/token
+    method: POST
+    validate_certs: false
+    body: "username=admin&password={{ admin_password }}&grant_type=password&client_id=admin-cli"
+    status_code: 200
+    headers:
+      Content-Type: "application/x-www-form-urlencoded"
+  register: access_token_result
+
+- name: Keycloak - Extract Keycloak auth token
+  set_fact:
+    access_token_bearer: "{{ access_token_result.json | json_query('access_token') }}"
+
+- name: Keycloak - Check for existing Keycloak client '{{ client_id }}'
+  uri:
+    url: https://{{ fdpg_auth_domain }}/admin/realms/dataportal/clients?clientId={{ client_id }}
+    method: GET
+    validate_certs: false
+    status_code: 200
+    headers:
+      Authorization: "Bearer {{ access_token_bearer }}"
+    return_content: true
+  register: keycloak_client_info
+
+- name: Keycloak - Create Keycloak client '{{ client_id }}'
+  uri:
+    url: https://{{ fdpg_auth_domain }}/admin/realms/dataportal/clients
+    method: POST
+    validate_certs: false
+    body: "{{ lookup('template','kc-client.json.j2') }}"
+    body_format: json
+    status_code: 201
+    headers:
+      Authorization: "Bearer {{ access_token_bearer }}"
+    return_content: true
+  when: (keycloak_client_info.json is undefined) or ((keycloak_client_info.json | type_debug == 'list') and (keycloak_client_info.json | length == 0))

@@ -20,7 +20,25 @@
       mode: u+rw,g-wx,o-rwx
       remote_src: true
     when: flare_env.stat.exists == false or flare_env.stat.ctime < flare_env_default.stat.ctime
+    
+  - name: Flare - Read 'trusted_cas.pem'
+    set_fact:
+      cas_content: "{{ lookup('file', storage_path + '/secrets/' + env + '/domain/trusted_cas.pem') }}"
 
+  - name: Flare - Split CAs in list
+    set_fact:
+      ca_list: "{{ cas_content | regex_findall('(?s)-----BEGIN CERTIFICATE-----.*?-----END CERTIFICATE-----') }}"
+
+  - name: Flare - Write each certificate to its own PEM file
+    copy:
+      content: "{{ item }}"
+      dest: "{{ secrets_path }}/trusted_ca_{{ '%02d' % (idx + 1) }}.pem"
+      mode: '0644'
+    loop: "{{ ca_list }}"
+    loop_control:
+      index_var: idx
+      label: "trusted_ca_{{ '%02d' % (idx + 1) }}.pem"
+    
   - name: Flare - Setup environment variables
     include_role:
       name: common
@@ -30,12 +48,14 @@
       variables:
       - name: FLARE_LOG_LEVEL
         value: "debug"
-
-  - name: Flare - Remove OpenID configuration
-    lineinfile:
-      path: "{{ project_path }}/docker-compose.yml"
-      regexp: "^\\s*FLARE_FHIR_OAUTH_.*"
-      state: absent
+      - name: FLARE_FHIR_OAUTH_ISSUER_URI
+        value: "{{ issuer_url }}"
+      - name: FLARE_FHIR_OAUTH_CLIENT_ID
+        value: "{{ client_id }}"
+      - name: FLARE_FHIR_OAUTH_CLIENT_SECRET
+        value: "{{ client_secret }}"
+      - name: FLARE_SELF_SIGNED_CA_CERT_PATH
+        value: "{{ secrets_path }}"
 
   - name: Flare - Start container
     community.docker.docker_compose_v2:

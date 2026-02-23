@@ -1,1 +1,2 @@
 feasibility_evaluation_strategy: "cql"
+letsencrypt_enabled: true

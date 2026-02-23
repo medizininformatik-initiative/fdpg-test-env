@@ -15,20 +15,26 @@
     state: present
     update_cache: yes
 
-- name: Add Docker GPG key
-  apt_key:
+- name: Download Package Signing Key for Docker APT repository
+  get_url:
     url: https://download.docker.com/linux/ubuntu/gpg
-    state: present
+    dest: /tmp/docker-keyring.asc
+    checksum: "sha256:1500c1f56fa9e26b9b8f42452a553675796ade0807cdce11975eb98170b3a570"
+
+- name: Dearmor and Install Signing Key File
+  shell: gpg --batch --dearmor -o /etc/apt/trusted.gpg.d/docker-keyring.gpg /tmp/docker-keyring.asc
+  args:
+    creates: /etc/apt/trusted.gpg.d/docker-keyring.gpg
 
 - name: Add Docker APT repository
   apt_repository:
-    repo: deb https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable
+    repo: deb [arch=amd64, signed-by=/etc/apt/trusted.gpg.d/docker-keyring.gpg] https://download.docker.com/linux/ubuntu {{ ansible_facts["distribution_release"] }} stable
     state: present
+    filename: docker-linux
 
 - name: Install Docker and Python Docker Packages
   apt:
     name:
     - docker-ce
-    - docker-compose
     - python3-docker
     state: present

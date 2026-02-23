@@ -8,22 +8,20 @@
       dest: "{{ project_path }}/deploy-config.json"
       remote_src: true
 
-  - name: FDPG GUI - Set Auth Base URL
+  - name: FDPG GUI - Set Configuration
     replace:
       path: "{{ project_path }}/deploy-config.json"
-      after: '{{ item.after }}'
-      before: '{{ item.before }}'
       regexp: '{{ item.regexp }}'
       replace: '{{ item.replace }}'
     loop:
-    - after: '\s*"auth"'
-      before: '\s*"legal"'
-      regexp: '\s*"baseUrl":\s*"https://.*"'
-      replace: '"baseUrl": "https://{{ fdpg_auth_domain }}"'
-    - after: '\s*"uiBackendApi"'
-      before: '\s*"auth"'
-      regexp: '\s*"baseUrl":\s*"https://.*localhost.*/api/v5"'
-      replace: '"baseUrl": "https://{{ fdpg_portal_domain }}/api/v5"'
+    - regexp: '"authBaseUrl":\s*"https://.*"'
+      replace: '"authBaseUrl": "https://{{ fdpg_auth_domain }}"'
+    - regexp: '"backendBaseUrl":\s*"https://.*"'
+      replace: '"backendBaseUrl": "https://{{ fdpg_portal_domain }}"'
+    - regexp: '"authClientId":\s*".*"'
+      replace: '"authClientId": "{{ fdpg_auth_client_id }}"'
+    - regexp: '"authRealm":\s*".*"'
+      replace: '"authRealm": "{{ fdpg_auth_realm }}"'
 
   - name: FDPG GUI - Start GUI
     community.docker.docker_compose_v2:

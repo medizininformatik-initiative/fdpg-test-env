@@ -1,14 +1,18 @@
 ---
 # variables for all hosts
 env: test
-deploy_version: "v5.4.4"
+dataportal_version: "main"
 fdpg_portal_domain: datenportal.test.forschen-fuer-gesundheit.de
 fdpg_portal_dsf_domain: dsf.fdpg.test.forschen-fuer-gesundheit.de
-fdpg_auth_domain: auth.fdpg.test.forschen-fuer-gesundheit.de
+fdpg_auth_domain: keycloak.dev.forschen-fuer-gesundheit.de
+fdpg_auth_context: /auth
+fdpg_auth_realm: fdpg
+fdpg_auth_client_id: feasibility-webapp
+dsf_auth_client_id: dsf-fhir
 diz_1_dsf_domain: dsf.diz-1.test.forschen-fuer-gesundheit.de
 diz_2_dsf_domain: dsf.diz-2.test.forschen-fuer-gesundheit.de
-diz_1_fhir_domain: fhir.diz-1.test.forschen-fuer-gesundheit.de
-diz_2_fhir_domain: fhir.diz-2.test.forschen-fuer-gesundheit.de
+diz_1_fhir_domain: blaze.diz-1.test.forschen-fuer-gesundheit.de
+diz_2_fhir_domain: blaze.diz-2.test.forschen-fuer-gesundheit.de
 dms_dsf_domain: dsf.dms.test.forschen-fuer-gesundheit.de
 mii_fhir_domain: fhir.test.forschen-fuer-gesundheit.de
 fdpg_portal_dsf_organization_identifier: forschen-fuer-gesundheit.de
@@ -16,8 +20,10 @@ diz_1_dsf_organization_identifier: diz-1.test.fdpg.forschen-fuer-gesundheit.de
 diz_2_dsf_organization_identifier: diz-2.test.fdpg.forschen-fuer-gesundheit.de
 dms_dsf_organization_identifier: dms.test.forschen-fuer-gesundheit.de
 letsencrypt_enabled: false
+blaze_frontend_enabled: true
+blaze_auth_client_id: blaze-service-client
 feasibility_evalution_obfuscate: true
-dsf_version: "1.9.0"
+dsf_version: "2.0.2"
 dsf_process_plugins_install:
 - name: dsf_process_allow_list
   version: "1.0.0.1"
@@ -39,13 +45,13 @@ dsf_process_plugins_install:
   - diz
   - dms
 - name: dsf_process_ping_pong
-  version: "2.0.0.0-RC2"
+  version: "2.0.0.2"
   install_targets:
   - fdpg
   - diz
   - dms
 - name: dsf_process_feasibility
-  version: "1.0.0.9"
+  version: "1.0.0.11"
   install_targets:
   - fdpg
   - diz
@@ -55,18 +61,7 @@ dsf_process_plugins_install:
     diz:
     - "medizininformatik-initiativede_feasibilityRequest|1.0"
 - name: dsf_process_report
-  version: "1.1.2.0"
-  install_targets:
-  - fdpg
-  - diz
-  process_excluded:
-    fdpg:
-    - "medizininformatik-initiativede_reportAutostart|1.1"
-    - "medizininformatik-initiativede_reportSend|1.1"
-    diz:
-    - "medizininformatik-initiativede_reportReceive|1.1"
-- name: dsf_process_report
-  version: "1.2.0.0"
+  version: "1.2.0.1"
   install_targets:
   - fdpg
   - diz
@@ -76,22 +71,6 @@ dsf_process_plugins_install:
     - "medizininformatik-initiativede_reportSend|1.2"
     diz:
     - "medizininformatik-initiativede_reportReceive|1.2"
-- name: dsf_process_data_sharing
-  version: "1.0.2.1"
-  install_targets:
-  - fdpg
-  - diz
-  - dms
-  process_excluded:
-    fdpg:
-    - "medizininformatik-initiativede_mergeDataSharing|1.0"
-    - "medizininformatik-initiativede_executeDataSharing|1.0"
-    diz:
-    - "medizininformatik-initiativede_coordinateDataSharing|1.0"
-    - "medizininformatik-initiativede_mergeDataSharing|1.0"
-    dms:
-    - "medizininformatik-initiativede_coordinateDataSharing|1.0"
-    - "medizininformatik-initiativede_executeDataSharing|1.0"
 - name: dsf_process_data_sharing
   version: "1.1.0.0"
   install_targets:
@@ -108,19 +87,6 @@ dsf_process_plugins_install:
     dms:
     - "medizininformatik-initiativede_coordinateDataSharing|1.1"
     - "medizininformatik-initiativede_executeDataSharing|1.1"
-- name: dsf_process_data_transfer
-  version: "1.0.3.1"
-  install_targets:
-  - diz
-  - dms
-  - fdpg
-  process_excluded:
-    diz:
-    - "medizininformatik-initiativede_dataReceive|1.0"
-    dms:
-    - "medizininformatik-initiativede_dataSend|1.0"
-    fdpg:
-    - "medizininformatik-initiativede_dataSend|1.0"
 - name: dsf_process_data_transfer
   version: "1.1.0.1"
   install_targets:

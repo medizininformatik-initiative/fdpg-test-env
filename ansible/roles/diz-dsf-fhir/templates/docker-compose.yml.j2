@@ -1,7 +1,7 @@
 services:
 
   db:
-    image: postgres:15
+    image: postgres:18
     restart: unless-stopped
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U liquibase_user -d fhir"]
@@ -11,7 +11,7 @@ services:
     volumes:
     - type: volume
       source: db-data
-      target: /var/lib/postgresql/data
+      target: /var/lib/postgresql
     environment:
       TZ: Europe/Berlin
       POSTGRES_PASSWORD_FILE: /run/secrets/db_liquibase.password
@@ -52,11 +52,12 @@ services:
       DEV_DSF_FHIR_CLIENT_TRUST_SERVER_CERTIFICATE_CAS: /run/secrets/app_client_trust_certificates.pem
       DEV_DSF_FHIR_CLIENT_CERTIFICATE: /run/secrets/app_client_certificate.pem
       DEV_DSF_FHIR_CLIENT_CERTIFICATE_PRIVATE_KEY: /run/secrets/app_client_certificate_private_key.pem
+      DEV_DSF_SERVER_AUTH_OIDC_PROVIDER_CLIENT_TRUST_SERVER_CERTIFICATE_CAS: /run/secrets/ssl_ca_certificate_file.pem
     depends_on:
     - db
 
   proxy:
-    image: 'nginxinc/nginx-unprivileged:1.25.4-alpine'
+    image: nginxinc/nginx-unprivileged:1.29.5-alpine
     restart: unless-stopped
     ports:
     - "443:8443"

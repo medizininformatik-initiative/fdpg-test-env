@@ -1,14 +1,12 @@
 ---
 # tasks file for diz
-- name: DIZ Triangle - Checkout FDPG Deployment
+- name: DIZ Data Node - Checkout FDPG Deployment
   include_role:
     name: common
     tasks_from: checkout-deploy-repo
-  vars:
-    feasibility_deploy_version: "{{ deploy_version }}"
   tags: common
 
-- name: DIZ Triangle - Extract DIZ instance from hostname
+- name: DIZ Data Node - Extract DIZ instance from hostname
   set_fact:
     diz_instance: "{{ inventory_hostname | regex_replace('^.*-diz-(\\d+)-.*$', '\\1') }}"
   failed_when: inventory_hostname is not regex('^.*-diz-\d+-.*$')
@@ -18,23 +16,47 @@
   - flare
   - proxy
 
-- name: DIZ Triangle - Deploy FHIR server
+- name: DIZ Data Node - Get Keycloak client secret
+  set_fact:
+    issuer_url: "https://{{ fdpg_auth_domain + (fdpg_auth_context | regex_replace('/$', '')) }}/realms/{{ fdpg_auth_realm }}"
+    client_id: "{{ blaze_auth_client_id }}"
+    client_secret: "{{ lookup('file', storage_path + '/secrets/' + env + '/keycloak/keycloak-' + blaze_auth_client_id + '.password') }}"
+  
+- name: DIZ Data Node - Deploy FHIR server
   include_tasks: fhir-server.yml
   vars:
-    project_path: "{{ deploy_path }}/feasibility-triangle/fhir-server"
-    project_name: triangle
+    project_path: "{{ deploy_path }}/data-node/fhir-server"
+    project_name: dataportal
   tags: fhir
 
-- name: DIZ Triangle - Deploy flare
+- name: DIZ Data Node - Deploy flare
   include_tasks: flare.yml
   vars:
-    project_path: "{{ deploy_path }}/feasibility-triangle/flare"
-    project_name: triangle
+    project_path: "{{ deploy_path }}/data-node/flare"
+    project_name: dataportal
   tags: flare
+  when: feasibility_evaluation_strategy == 'ccdl'
 
-- name: DIZ Triangle - Deploy reverse proxy
+- name: DIZ Data Node - Deploy Torch
+  include_tasks: torch.yml
+  vars:
+    project_path: "{{ deploy_path }}/data-node/torch"
+    project_name: dataportal
+  tags: torch
+  when: enable_torch | default(false)
+
+- name: DIZ Data Node - Deploy Terminology Server
+  include_tasks: terminology_server.yml
+  vars:
+    project_path: "{{ deploy_path }}/data-node/terminology-server"
+    project_name: dataportal
+  tags: terminology-server
+  when: enable_terminology_server | default(false)
+  
+
+- name: DIZ Data Node - Deploy reverse proxy
   include_tasks: rev-proxy.yml
   vars:
-    project_path: "{{ deploy_path }}/feasibility-triangle/rev-proxy"
-    project_name: triangle
+    project_path: "{{ deploy_path }}/data-node/rev-proxy"
+    project_name: dataportal
   tags: proxy
