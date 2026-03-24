@@ -60,7 +60,7 @@ services:
       - db
 
   fhir-store:
-    image:  ghcr.io/samply/blaze:0.33
+    image:  ghcr.io/samply/blaze:{{ blaze_version }}
     restart: unless-stopped
     healthcheck:
       test: [ "CMD", "curl", "http://localhost:8080/health" ]
