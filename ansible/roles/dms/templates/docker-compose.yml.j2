@@ -1,6 +1,6 @@
 services:
   kds-store:
-    image:  ghcr.io/samply/blaze:1.5.0
+    image:  ghcr.io/samply/blaze:{{ blaze_version }}
     restart: unless-stopped
     healthcheck:
       test: [ "CMD", "curl", "http://localhost:8080/health" ]
