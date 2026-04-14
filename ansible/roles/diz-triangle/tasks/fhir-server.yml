@@ -183,31 +183,9 @@
     failed_when: false
     register: mii_testdata_upload
 
-  - name: DSF FHIR - Get and upload KDS test data
+  - name: DSF FHIR - Upload KDS test data
+    include_tasks: "upload-kds-test-data"
     when: patient_count.json.total is defined and patient_count.json.total == 0
-    block:
-    - name: DSF FHIR - Get KDS test data
-      unarchive:
-        src: https://github.com/medizininformatik-initiative/mii-testdata/releases/download/v1.0.1/kds-testdata-2024.0.1.zip
-        dest: "{{ project_path }}"
-        remote_src: true
-        creates: "{{ project_path }}/kds-testdata-2024.0.1"
-    
-    - name: FHIR Server - Read KDS bundle from remote host
-      slurp:
-        src: "{{ project_path }}/kds-testdata-2024.0.1/resources/Bundle-mii-exa-test-data-bundle.json"
-      changed_when: false
-      register: kds_bundle
-        
-    - name: FHIR Server - Upload KDS test data
-      uri:
-        url: "http://localhost:8081/fhir"
-        method: POST
-        headers:
-          Content-Type: "application/fhir+json"
-          Authorization: "Bearer {{ access_token_bearer }}"
-        body: "{{ kds_bundle.content | b64decode }}"
-        status_code: [200, 201]
-        timeout: 30
-      failed_when: kds_upload.status not in [200, 201]
-      register: kds_upload
+    loop:
+      - file: https://github.com/medizininformatik-initiative/mii-testdata/releases/download/v1.0.1/kds-testdata-2024.0.1.zip
+      - file: https://github.com/medizininformatik-initiative/mii-testdata/releases/download/v2026.0.0-rc.1/kds-testdata-2026.0.0-20260330-135816.zip
