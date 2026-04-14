@@ -52,7 +52,30 @@
     project_name: dataportal
   tags: terminology-server
   when: enable_terminology_server | default(false)
-  
+
+- name: DIZ Data Node - Deploy FHIR Pseudonymizer
+  include_tasks: fhir-pseudonymizer.yml
+  vars:
+    project_path: "{{ deploy_path }}/data-node/fhir-pseudonymizer"
+    project_name: dataportal
+  tags: fhir-pseudonymizer
+  when: enable_fhir_pseudonymizer | default(false)
+
+- name: DIZ Data Node - Deploy FHIR Flattener
+  include_tasks: fhir-flattener.yml
+  vars:
+    project_path: "{{ deploy_path }}/data-node/fhir-flattener"
+    project_name: dataportal
+  tags: fhir-flattener
+  when: enable_fhir_flattener | default(false)
+
+- name: DIZ Data Node - Deploy FHIR Validator
+  include_tasks: fhir-validator.yml
+  vars:
+    project_path: "{{ deploy_path }}/data-node/fhir-validator"
+    project_name: dataportal
+  tags: fhir-validator
+  when: enable_fhir_validator | default(false)
 
 - name: DIZ Data Node - Deploy reverse proxy
   include_tasks: rev-proxy.yml

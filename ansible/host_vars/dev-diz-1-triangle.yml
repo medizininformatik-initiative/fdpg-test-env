@@ -1,3 +1,6 @@
 feasibility_evaluation_strategy: "cql"
 enable_torch: true
 enable_terminology_server: true
+enable_fhir_pseudonymizer: true
+enable_fhir_flattener: true
+enable_fhir_validator: true
