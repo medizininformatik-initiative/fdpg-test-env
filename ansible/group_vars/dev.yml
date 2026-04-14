@@ -21,7 +21,7 @@ letsencrypt_enabled: true
 blaze_frontend_enabled: true
 blaze_auth_client_id: blaze
 feasibility_evaluation_obfuscate: false
-dsf_version: "2.0.2"
+dsf_version: "2.1.0"
 dsf_process_plugins_install:
 - name: dsf_process_allow_list
   version: "1.0.0.1"
