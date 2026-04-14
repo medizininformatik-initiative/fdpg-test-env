@@ -36,6 +36,7 @@
       - mfolz
       - pbehrend
       - poverton
+      - dhahne
 
 - name: Setup DIZ internal network
   hosts:
