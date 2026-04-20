@@ -37,6 +37,7 @@
       - pbehrend
       - poverton
       - dhahne
+      - lcsomai
 
 - name: Setup DIZ internal network
   hosts:
