@@ -61,9 +61,9 @@ http {
             proxy_read_timeout 86400;
         }
 
-        location ~ ^/api/(.*)$ {
+        location ~ ^/((api|v3)/.*)$ {
             set $backend_upstream dataportal-backend:8090;
-            proxy_pass http://$backend_upstream/api/$1$is_args$args;
+            proxy_pass http://$backend_upstream/$1$is_args$args;
             proxy_set_header X-Forwarded-Proto $scheme;
             proxy_set_header X-Forwarded-Host  $host;
             proxy_buffer_size 8k;
