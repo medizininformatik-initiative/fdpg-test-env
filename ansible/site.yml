@@ -38,6 +38,7 @@
       - poverton
       - dhahne
       - lcsomai
+      - bkabaoglu
 
 - name: Setup DIZ internal network
   hosts:

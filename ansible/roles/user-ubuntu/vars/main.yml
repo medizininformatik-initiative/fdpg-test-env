@@ -4,6 +4,9 @@ ssh_keys:
   akiel:
     name: Alexander Kiel
     key: "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCXNWbPLgh2qbRY5h20MzK6ezuYqYFNW1uDbkXehsX0/9eWY8+W0lh/LN6qOhx0/SDhZS1m2HM1HXpK9rbgkx0CejW+Di6sAOE52/6r9d4q4LshxjSjQvn0YAulu7ErwAoTJgFcOcUf8GXMU0FbSUgSBiwjD/TUHw30ywWmDqWtR2YzZH5qYZMlDaoh3RXxZGbNc1t3YOpIAUXutJUzHn4ekG4OltF8Wc2uHfr+Q0jAwi4zthhNMnZ8cgLHze1AMRV/QvzPG/h6TQ+A2vhMSo9lCV0eRH/dg6dADSHNoQxFHB/7Z7VHXZZoOhD4L8W8P7rWnbeVevYw9enZECxdCqLR alexanderkiel@gmx.net"
+  bkabaoglu:
+    name: Burce Kabaoglu
+    key: ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHKZRtVYg85bmOzlBR0QaoKFHGnzxOTEs3AtJGfjy0Ia tmf\bkabaoglu@NBTMF074
   bschaffer:
     name: Bastian Schaffer
     key: "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQDtP37hNvod3dg6f2JcQeHkTw+Wnxmkjtlhg7m9ec/op3tdrOYQ3LrcnhN6ofsVVW+vnzOR/E1KjSlYPFP6kol0JdCDtBGWn4Nbp9wVMRT7DXSxpxN6irRk+2Cxk4dIP4WmVDuY7ZzeUyIDsjD78X6fIZZR/YRliejGsvHGVeFmJKDSux48CVjnw7dYAxTZ5J44I1LCZWK/2qAZrYkq08LTzZJNKg3O/yJGyEiG2X6P9f8twpWP2QI7gRyTJz/U7bs122E7l4pvxmZz7aFv9qa+4ur9m6Sv9ICnl0HuTrC/XN/a6CMZzWvH+NfbBqTUP+VVURaLSxKkaPKsNLGy/pPcVjfKgVVOy7We9FPfq3zYpS2LsA0ODoMDcPnf6x6RnexZxNfzsjCFht91JenmXOvo2NQA5/CCsPKTIiS4QiLG2G3EkHecyYtNaR3WCXIBwwrOIGjuljUl2857RwE+1Ls/ixC45lwnVCmV1BXR83JJCgFriAxW7MhPqPkhjDP7jJL59PNilfIN3nXlQYXaiMsb5OmVNkJzkrs9D98pHZRyYTf2Ii5lrpLaiX5bQw6X09HKwyudXSSAyPakjL5PwyM+Hitz0W1qzGA98NYy9E6ISGRqNj+kxvEagnOhEOMlZzd/JEpMS/t91KcgyPJOwxfyf11LgoFBRvPUbtiUpSn4LQ=="
@@ -34,4 +37,3 @@ ssh_keys:
   rwettstein:
     name: Reto Wettstein
     key: "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC6CMKZ2H46FLDN9ueBbh/WqBp6UxHdXjAZe3/zun62NJ1PPmemWU+TmDL5oDHaxODvH0dtPZISl5eiXxUdVoujI7OI+V03E5Xbb9u/ktK+S8r/vxEdQVxfnUseYSLb71MXHtg59MMmpgcjJd1twIKAtICMZGNw0cIyCU/NaXJ5uk52jawtFP22ih36uSJt7j/CZFyGozqGkl7GcLc0FmrC+k3N5daPU43xMyPF7synX10f7J9O1mOaLkSiLIw0VtFVX7xty/8vGUwP1KU7jC/OTa5HJ+XTN75WmD59qIkqOS5+cnbFYAr30dz8xwqRTJs4FPyRBrxH8nz4K1L1dKGT retwet@dhcp167-623.laptop-zim.uni-heidelberg.de"
-  
