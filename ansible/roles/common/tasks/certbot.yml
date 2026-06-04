@@ -33,7 +33,7 @@
   - name: Certbot - Setup Certbot Container
     docker_container:
       name: certbot-renew
-      image: certbot/certbot
+      image: certbot/certbot:v5.6.0
       user: "{{ certbot_user_id | default(deploy_user) }}:{{ certbot_group_id | default(deploy_user) }}"
       command: "certonly -q --standalone --preferred-challenges http --keep-until-expiring -d {{ certbot_register_domain }}
                          {%- if (certbot_register_sans is defined) and (certbot_register_sans is iterable) %}
