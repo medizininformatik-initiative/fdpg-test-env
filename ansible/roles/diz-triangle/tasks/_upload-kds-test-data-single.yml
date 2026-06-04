@@ -1,0 +1,18 @@
+---
+- name: FHIR Server - Read KDS bundle from remote host (single file)
+  slurp:
+    src: "{{ bundle_path }}"
+  register: kds_bundle
+
+- name: FHIR Server - Upload KDS test data (single file)
+  uri:
+    url: "http://localhost:8081/fhir"
+    method: POST
+    headers:
+      Content-Type: "application/fhir+json"
+      Authorization: "Bearer {{ access_token_bearer }}"
+    body: "{{ kds_bundle.content | b64decode }}"
+    status_code: [200, 201]
+    timeout: 30
+  failed_when: kds_upload.status not in [200, 201]
+  register: kds_upload

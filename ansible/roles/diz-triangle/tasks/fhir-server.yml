@@ -194,8 +194,12 @@
     register: mii_testdata_upload
 
   - name: DSF FHIR - Upload KDS test data
-    include_tasks: "upload-kds-test-data"
+    include_tasks: upload-kds-test-data.yml
     when: patient_count.json.total is defined and patient_count.json.total == 0
+    loop_control:
+      loop_var: testdata_file
     loop:
-      - file: https://github.com/medizininformatik-initiative/mii-testdata/releases/download/v1.0.1/kds-testdata-2024.0.1.zip
-      - file: https://github.com/medizininformatik-initiative/mii-testdata/releases/download/v2026.0.0-rc.1/kds-testdata-2026.0.0-20260330-135816.zip
+      - url: https://github.com/medizininformatik-initiative/mii-testdata/releases/download/v1.0.1/kds-testdata-2024.0.1.zip
+      - url: https://github.com/medizininformatik-initiative/mii-testdata/releases/download/v2026.0.0-rc.1/kds-testdata-2026.0.0-20260330-135816.zip
+    vars:
+      url: "{{ testdata_file.url }}"

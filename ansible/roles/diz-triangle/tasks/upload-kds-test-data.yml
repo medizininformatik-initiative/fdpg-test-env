@@ -4,22 +4,22 @@
     dest: "{{ project_path }}"
     remote_src: true
     creates: "{{ project_path }}/{{ url | basename }}"
-
-- name: FHIR Server - Read KDS bundle from remote host
-  slurp:
-    src: "{{ project_path }}/kds-testdata-2024.0.1/resources/Bundle-mii-exa-test-data-bundle.json"
+ 
+- name: FHIR Server - Find KDS bundle files
+  find:
+    paths: >-
+      {{ project_path }}/{{ url | basename | regex_replace('^(.*[^\.]+)\.[^\.]+$','\1') }}/resources
+    patterns: "Bundle-mii-exa-test-data-bundle*.json"
+    file_type: file
+  register: kds_bundle_files
   changed_when: false
-  register: kds_bundle
-    
-- name: FHIR Server - Upload KDS test data
-  uri:
-    url: "http://localhost:8081/fhir"
-    method: POST
-    headers:
-      Content-Type: "application/fhir+json"
-      Authorization: "Bearer {{ access_token_bearer }}"
-    body: "{{ kds_bundle.content | b64decode }}"
-    status_code: [200, 201]
-    timeout: 30
-  failed_when: kds_upload.status not in [200, 201]
-  register: kds_upload
+ 
+- name: FHIR Server - Upload KDS test data (one POST per found bundle file)
+  include_tasks: _upload-kds-test-data-single.yml
+  loop: "{{ kds_bundle_files.files }}"
+  when: kds_bundle_files.files | length > 0
+  loop_control:
+    loop_var: bundle
+    label: "{{ bundle.path }}"
+  vars:
+    bundle_path: "{{ bundle.path }}"
