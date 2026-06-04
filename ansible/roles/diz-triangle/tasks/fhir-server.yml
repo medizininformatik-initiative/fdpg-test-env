@@ -125,6 +125,16 @@
       - name: AUTH_SECRET
         value: "{{ auth_secret }}"
 
+  - name: FHIR Server - Remove existing docker container and volumes
+    community.docker.docker_compose_v2:
+      project_src: "{{ project_path }}"
+      project_name: "{{ project_name }}"
+      state: "absent"
+      remove_volumes: true
+    environment:
+      COMPOSE_IGNORE_ORPHANS: "1"
+    when: resetFhirServer is defined and resetFhirServer | lower in ['yes', 'true']
+
   - name: FHIR Server - Start container
     community.docker.docker_compose_v2:
       project_src: "{{ project_path }}"
