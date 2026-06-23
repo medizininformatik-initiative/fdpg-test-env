@@ -81,14 +81,10 @@
   retries: 30
   delay: 2
 
-- name: Debug
-  debug:
-    var: ansible_facts
-
 - name: Define blazectl version
   set_fact:
-    blazectl_version: "0.17.1"
-    blaze_architecture: ansible_facts.architecture == "aarch64" | ternary("arm64", "amd64")
+    blazectl_version: "1.4.0"
+    blazectl_architecture: ansible_facts.architecture == "aarch64" | ternary("arm64", "amd64")
 
 - name: Download Blazectl
   ansible.builtin.unarchive:
