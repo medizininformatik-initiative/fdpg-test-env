@@ -8,6 +8,7 @@ fdpg_auth_domain: auth.dev.forschen-fuer-gesundheit.de
 fdpg_auth_context: /
 fdpg_auth_realm: dataportal
 fdpg_auth_client_id: dataportal
+dsf_auth_client_id: dsf-fhir
 diz_1_dsf_domain: dsf.diz-1.dev.forschen-fuer-gesundheit.de
 diz_2_dsf_domain: dsf.diz-2.dev.forschen-fuer-gesundheit.de
 diz_1_fhir_domain: blaze.diz-1.dev.forschen-fuer-gesundheit.de
@@ -21,7 +22,7 @@ letsencrypt_enabled: true
 blaze_frontend_enabled: true
 blaze_auth_client_id: blaze
 feasibility_evaluation_obfuscate: false
-dsf_version: "2.1.0"
+dsf_version: "2.1.1"
 dsf_process_plugins_install:
 - name: dsf_process_allow_list
   version: "1.0.0.1"
