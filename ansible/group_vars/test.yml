@@ -4,10 +4,10 @@ env: test
 dataportal_version: "main"
 fdpg_portal_domain: datenportal.test.forschen-fuer-gesundheit.de
 fdpg_portal_dsf_domain: dsf.fdpg.test.forschen-fuer-gesundheit.de
-fdpg_auth_domain: keycloak.dev.forschen-fuer-gesundheit.de
-fdpg_auth_context: /auth
-fdpg_auth_realm: fdpg
-fdpg_auth_client_id: feasibility-webapp
+fdpg_auth_domain: auth.dev.forschen-fuer-gesundheit.de
+fdpg_auth_context: /
+fdpg_auth_realm: dataportal
+fdpg_auth_client_id: dataportal
 dsf_auth_client_id: dsf-fhir
 diz_1_dsf_domain: dsf.diz-1.test.forschen-fuer-gesundheit.de
 diz_2_dsf_domain: dsf.diz-2.test.forschen-fuer-gesundheit.de
@@ -21,7 +21,7 @@ diz_2_dsf_organization_identifier: diz-2.test.fdpg.forschen-fuer-gesundheit.de
 dms_dsf_organization_identifier: dms.test.forschen-fuer-gesundheit.de
 letsencrypt_enabled: false
 blaze_frontend_enabled: true
-blaze_auth_client_id: blaze-service-client
+blaze_auth_client_id: blaze
 feasibility_evalution_obfuscate: true
 dsf_version: "2.1.1"
 dsf_process_plugins_install:
