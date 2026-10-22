@@ -31,14 +31,15 @@
   - role: user-ubuntu
     vars:
       add_authorized_keys:
+      - bkabaoglu
       - bschaffer
+      - dhahne
+      - jpalm
+      - lcsomai
       - ltriefenbach
       - mfolz
       - pbehrend
       - poverton
-      - dhahne
-      - lcsomai
-      - bkabaoglu
 
 - name: Setup DIZ internal network
   hosts:
