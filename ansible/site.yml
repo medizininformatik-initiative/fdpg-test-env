@@ -32,6 +32,7 @@
     vars:
       add_authorized_keys:
       - bkabaoglu
+      - bsailer
       - bschaffer
       - dhahne
       - jpalm

@@ -7,6 +7,9 @@ ssh_keys:
   bkabaoglu:
     name: Burce Kabaoglu
     key: ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHKZRtVYg85bmOzlBR0QaoKFHGnzxOTEs3AtJGfjy0Ia tmf\bkabaoglu@NBTMF074
+  bsailer:
+    name: Benjamin Sailer
+    key: ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIFmouBMTPG2J9oEimlTaRTzl+OaANYcX6V648gPB+xHT bsailer@NowIsBetter
   bschaffer:
     name: Bastian Schaffer
     key: "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQDtP37hNvod3dg6f2JcQeHkTw+Wnxmkjtlhg7m9ec/op3tdrOYQ3LrcnhN6ofsVVW+vnzOR/E1KjSlYPFP6kol0JdCDtBGWn4Nbp9wVMRT7DXSxpxN6irRk+2Cxk4dIP4WmVDuY7ZzeUyIDsjD78X6fIZZR/YRliejGsvHGVeFmJKDSux48CVjnw7dYAxTZ5J44I1LCZWK/2qAZrYkq08LTzZJNKg3O/yJGyEiG2X6P9f8twpWP2QI7gRyTJz/U7bs122E7l4pvxmZz7aFv9qa+4ur9m6Sv9ICnl0HuTrC/XN/a6CMZzWvH+NfbBqTUP+VVURaLSxKkaPKsNLGy/pPcVjfKgVVOy7We9FPfq3zYpS2LsA0ODoMDcPnf6x6RnexZxNfzsjCFht91JenmXOvo2NQA5/CCsPKTIiS4QiLG2G3EkHecyYtNaR3WCXIBwwrOIGjuljUl2857RwE+1Ls/ixC45lwnVCmV1BXR83JJCgFriAxW7MhPqPkhjDP7jJL59PNilfIN3nXlQYXaiMsb5OmVNkJzkrs9D98pHZRyYTf2Ii5lrpLaiX5bQw6X09HKwyudXSSAyPakjL5PwyM+Hitz0W1qzGA98NYy9E6ISGRqNj+kxvEagnOhEOMlZzd/JEpMS/t91KcgyPJOwxfyf11LgoFBRvPUbtiUpSn4LQ=="
