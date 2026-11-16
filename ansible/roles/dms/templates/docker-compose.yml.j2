@@ -3,7 +3,7 @@ services:
     image:  ghcr.io/samply/blaze:{{ blaze_version }}
     restart: unless-stopped
     healthcheck:
-      test: [ "CMD", "curl", "http://localhost:8080/health" ]
+      test: [ "CMD", "wget", "--spider", "http://localhost:8080/health" ]
       interval: 10s
       timeout: 15s
       retries: 5

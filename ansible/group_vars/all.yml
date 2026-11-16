@@ -1,6 +1,6 @@
 ---
 # variables for all hosts
-blaze_version: 1.6.1
+blaze_version: 1.13.0
 deploy_user: ubuntu
 deploy_path: "/home/{{ deploy_user }}/deploy"
 storage_path: ../.remote-storage
