@@ -112,4 +112,3 @@ dsf_process_plugins_install:
     - "medizininformatik-initiativede_dataSend|1.1"
     fdpg:
     - "medizininformatik-initiativede_dataSend|1.1"
-

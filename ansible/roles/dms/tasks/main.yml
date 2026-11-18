@@ -19,6 +19,7 @@
     db_fhir_user_permanent_delete_password_path: "{{ secrets_path }}/db_user_permanent_delete.password"
     dms_public_key_path: "{{ secrets_path }}/dms_public_key.pem"
     dms_private_key_path: "{{ secrets_path }}/dms_private_key.pem"
+    project_name: "dms"
 
 - name: "DMS - Create folders"
   file:
@@ -95,6 +96,9 @@
     certbot_register_email: info@tmf-ev.de
     certbot_register_domain: "{{ dms_dsf_domain }}"
     certificates_path: "{{ secrets_path }}/letsencrypt"
+    certbot_renewal_project_name: "{{ project_name }}"
+    certbot_renewal_docker_compose_files:
+    - "{{ deploy_path }}/docker-compose.yml"
     certbot_user_id: 101
     certbot_group_id: 101
   when: letsencrypt_enabled
@@ -154,7 +158,7 @@
 - name: DMS - Start services
   community.docker.docker_compose_v2:
     project_src: "{{ deploy_path }}"
-    project_name: "dms"
+    project_name: "{{ project_name }}"
     recreate: "{% if recreateContainer is defined and recreateContainer|lower in ['yes', 'true'] %}always{% else %}auto{% endif %}"
 
 - name: DMS - Wait for FHIR app
