@@ -151,7 +151,7 @@ services:
         condition: service_healthy
 
   proxy:
-    image: nginx:1.29.0
+    image: nginx/nginx-unprivileged:{{ nginx_version }}
     restart: unless-stopped
     healthcheck:
       test: ["CMD-SHELL", "curl -sk --cacert /run/secrets/proxy_trusted_client_cas.pem --fail-with-body https://localhost:8443"]

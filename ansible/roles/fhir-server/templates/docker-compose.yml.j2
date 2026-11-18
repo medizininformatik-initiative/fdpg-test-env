@@ -21,7 +21,7 @@ services:
     - "blaze-data:/app/data"
 
   proxy:
-    image: 'nginx:1.28.0'
+    image: nginx/nginx-unprivileged:{{ nginx_version }}
     restart: unless-stopped
     ports:
     - "443:8443"

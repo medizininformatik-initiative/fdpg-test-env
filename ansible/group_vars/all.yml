@@ -1,6 +1,7 @@
 ---
 # variables for all hosts
 blaze_version: 1.13.0
+nginx_version: 1.31.9-alpine-slim
 deploy_user: ubuntu
 deploy_path: "/home/{{ deploy_user }}/deploy"
 storage_path: ../.remote-storage

@@ -57,7 +57,7 @@ services:
     - db
 
   proxy:
-    image: nginxinc/nginx-unprivileged:1.29.5-alpine
+    image: nginx/nginx-unprivileged:{{ nginx_version }}
     restart: unless-stopped
     ports:
     - "443:8443"

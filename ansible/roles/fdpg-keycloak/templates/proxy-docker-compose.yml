@@ -1,6 +1,6 @@
 services:
   nginx:
-    image: 'nginxinc/nginx-unprivileged:1.25.4-alpine'
+    image: nginx/nginx-unprivileged:{{ nginx_version }}
     restart: unless-stopped
     networks:
     - keycloak_default
