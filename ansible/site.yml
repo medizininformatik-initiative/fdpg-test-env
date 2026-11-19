@@ -22,6 +22,7 @@
   - role: user-ubuntu
     vars:
       add_authorized_keys:
+      - mfolz
       - rwettstein
 
 - name: Add additional ssh keys to Dev DIZ-1
