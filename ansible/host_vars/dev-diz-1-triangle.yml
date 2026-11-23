@@ -4,3 +4,5 @@ enable_terminology_server: true
 enable_fhir_pseudonymizer: true
 enable_fhir_flattener: true
 enable_fhir_validator: true
+resetFhirServer: true
+upload_ontology_testdata: true
