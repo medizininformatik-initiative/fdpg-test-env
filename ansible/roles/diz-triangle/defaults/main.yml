@@ -1,2 +1,12 @@
 ---
 # defaults file for diz
+
+# Remove the FHIR server container and its volumes before starting it.
+resetFhirServer: false
+
+# Generate and upload the ontology test data of the deployed dataportal version.
+upload_ontology_testdata: false
+
+# Keep downloads outside the Blaze volume so that each ontology release is downloaded only once.
+ontology_testdata_cache_dir: "{{ deploy_path }}/.cache/ontology-testdata/cache"
+ontology_testdata_output_dir: "{{ deploy_path }}/.cache/ontology-testdata/output"
